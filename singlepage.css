@@ -376,7 +376,7 @@ body {
     font-weight: 600;
     font-size: 0.95rem;
     color: var(--secondary);
-    -moz-appearance: textfield;
+    appearance: textfield; /* 👈 Propiedad estándar moderna */
 }
 
 .qty-input::-webkit-outer-spin-button,
