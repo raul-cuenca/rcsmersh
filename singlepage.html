@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RCSmersh - Personalizados</title>
+    <!-- Estilos CSS principal -->
+    <link rel="stylesheet" href="singlepage.css">
+    <!-- Iconos Phosphor -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+
+<body>
+
+    <!-- ==================== HEADER / NAV ==================== -->
+    <header class="header">
+        <div class="container nav-container">
+            <a href="#inicio" class="logo">RCS<span>mersh</span></a>
+
+            <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
+                <i class="ph ph-list"></i>
+            </button>
+
+            <nav class="nav-menu" id="navMenu">
+                <ul class="nav-list">
+                    <li><a href="#inicio" class="nav-link active">Inicio</a></li>
+                    <li class="dropdown">
+                        <a href="#tienda" class="nav-link">Tienda <i class="ph ph-caret-down"></i></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="#categoria-textil">Textil</a></li>
+                            <li><a href="#categoria-tazas">Tazas</a></li>
+                            <li><a href="#categoria-cuadros">Cuadros</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#contacto" class="nav-link">Contacto</a></li>
+                </ul>
+            </nav>
+
+            <!-- Botón del Carrito -->
+            <div class="cart-wrapper">
+                <button class="cart-btn" id="cartBtn" aria-label="Ver carrito">
+                    <i class="ph ph-shopping-cart"></i>
+                    <span class="cart-count" id="cartCount">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== PANEL LATERAL DEL CARRITO ==================== -->
+    <aside class="cart-dropdown" id="cartDropdown">
+        <div class="cart-header">
+            <h3><i class="ph ph-shopping-cart"></i> Tu Carrito</h3>
+            <button class="cart-close-btn" id="cartCloseBtn" aria-label="Cerrar carrito">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        
+        <div class="cart-items" id="cartItems">
+            <p class="cart-empty">El carrito está vacío</p>
+        </div>
+
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span>S/ <span id="cartTotal">0.00</span></span>
+            </div>
+            <button class="btn btn-primary btn-block" id="checkoutBtn">Pedir por WhatsApp</button>
+        </div>
+    </aside>
+
+    <main>
+        <!-- ==================== SECCIÓN INICIO (CARRUSEL) ==================== -->
+        <section id="inicio" class="section hero-section">
+            <div class="carousel" id="carousel">
+                <div class="carousel-slide active">
+                    <img src="assets/polos_sublimados.webp" alt="Polos Estampados DTF y Sublimados">
+                    <div class="hero-overlay">
+                        <div class="carousel-caption">
+                            <h2>Polos Estampados DTF & Sublimación</h2>
+                            <p>Diseños vibrantes y de alta durabilidad en telas seleccionadas.</p>
+                            <a href="#categoria-textil" class="btn btn-primary">Ver Catálogo Textil</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-slide">
+                    <img src="assets/tazas_sublimadas.webp" alt="Tazas Sublimables Personalizadas">
+                    <div class="hero-overlay">
+                        <div class="carousel-caption">
+                            <h2>Tazas Sublimables Premium</h2>
+                            <p>El regalo o merchandising corporativo perfecto.</p>
+                            <a href="#categoria-tazas" class="btn btn-primary">Ver Tazas</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-slide">
+                    <img src="assets/cuadros.sublimados.webp" alt="Cuadros en Aluminio Sublimables">
+                    <div class="hero-overlay">
+                        <div class="carousel-caption">
+                            <h2>Cuadros en Aluminio Full Color</h2>
+                            <p>Impresión de alta definición con acabado metálico brillante.</p>
+                            <a href="#categoria-cuadros" class="btn btn-primary">Ver Cuadros</a>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="carousel-control prev" id="prevSlide" aria-label="Anterior"><i class="ph ph-caret-left"></i></button>
+                <button class="carousel-control next" id="nextSlide" aria-label="Siguiente"><i class="ph ph-caret-right"></i></button>
+            </div>
+        </section>
+
+        <!-- ==================== SECCIÓN TIENDA ==================== -->
+        <section id="tienda" class="section container">
+            <h2 class="section-title">Nuestros Productos</h2>
+
+            <div id="categoria-textil" class="category-block">
+                <h3 class="category-title"><i class="ph ph-t-shirt"></i> Textil (Polos DTF y Sublimados)</h3>
+                <div class="products-grid" id="gridTextil"></div>
+            </div>
+
+            <div id="categoria-tazas" class="category-block">
+                <h3 class="category-title"><i class="ph ph-coffee"></i> Tazas Sublimables</h3>
+                <div class="products-grid" id="gridTazas"></div>
+            </div>
+
+            <div id="categoria-cuadros" class="category-block">
+                <h3 class="category-title"><i class="ph ph-image"></i> Cuadros Personalizados en Aluminio</h3>
+                <div class="products-grid" id="gridCuadros"></div>
+            </div>
+        </section>
+
+        <!-- ==================== SECCIÓN CONTACTO ==================== -->
+        <section id="contacto" class="section bg-light">
+            <div class="container form-container">
+                <h2 class="section-title">Ponte en Contacto</h2>
+                <p class="section-subtitle">Déjanos tus datos y nos comunicaremos contigo para cotizaciones especiales.</p>
+
+                <form id="contactForm" class="contact-form">
+                    <div class="form-group">
+                        <label for="nombre">Nombre Completo *</label>
+                        <input type="text" id="nombre" name="nombre" required placeholder="Ej. Juan Pérez">
+                    </div>
+                    <div class="form-group">
+                        <label for="documento">Documento de Identidad (DNI/RUC) *</label>
+                        <input type="text" id="documento" name="documento" required placeholder="Ej. 12345678">
+                    </div>
+                    <div class="form-group">
+                        <label for="telefono">Teléfono de Contacto *</label>
+                        <input type="tel" id="telefono" name="telefono" required placeholder="Ej. 987654321">
+                    </div>
+                    <div class="form-group">
+                        <label for="correo">Correo Electrónico (Opcional)</label>
+                        <input type="email" id="correo" name="correo" placeholder="ejemplo@correo.com">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Enviar Cotización</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-brand">
+                <h3>Merch<span>Store</span></h3>
+                <p>Especialistas en sublimación, estampado DTF y regalos personalizados a full color.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Categorías</h4>
+                <ul>
+                    <li><a href="#categoria-textil">Textil</a></li>
+                    <li><a href="#categoria-tazas">Tazas</a></li>
+                    <li><a href="#categoria-cuadros">Cuadros</a></li>
+                </ul>
+            </div>
+            <div class="footer-contact">
+                <h4>Contacto</h4>
+                <p><i class="ph ph-whatsapp-logo"></i> +51 959 562 867</p>
+                <p><i class="ph ph-envelope-simple"></i> contacto@rcsmersh.pe</p>
+                <p><i class="ph ph-map-pin"></i> Av. Guardia Civil 665, Lima, Perú</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 RCSmersh. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="singlepage.js"></script>
+</body>
+
+</html>
