@@ -6,18 +6,18 @@ let temporizadorCarrito = null; // Controla la ocultación automática diferida 
 
 // Catálogo base de productos disponibles (12 ítems repartidos en 3 categorías)
 const productos = [
-    { id: 1, nombre: "Polo DTF Diseño Urbano", precio: 35.00, categoria: "textil", imagen: "assets/images/polo1.webp" },
-    { id: 2, nombre: "Polo Estampado Anime", precio: 38.00, categoria: "textil", imagen: "assets/images/polo2.webp" },
-    { id: 3, nombre: "Polera Oversize Minimalista", precio: 65.00, categoria: "textil", imagen: "assets/images/polo3.webp" },
-    { id: 4, nombre: "Polera con Capucha Streetwear", precio: 70.00, categoria: "textil", imagen: "assets/images/polo4.webp" },
-    { id: 5, nombre: "Gorra Personalizada Premium", precio: 25.00, categoria: "textil", imagen: "assets/images/polo5.webp" },
-    { id: 6, nombre: "Tote Bag de Algodón Ilustrado", precio: 20.00, categoria: "textil", imagen: "assets/images/polo6.webp" },
-    { id: 7, nombre: "Taza Mágica Sensible al Calor", precio: 22.00, categoria: "tazas", imagen: "assets/images/taza1.webp" },
-    { id: 8, nombre: "Taza Cerámica Programador", precio: 18.00, categoria: "tazas", imagen: "assets/images/taza2.webp" },
-    { id: 9, nombre: "Taza Térmica Acero Inoxidable", precio: 30.00, categoria: "tazas", imagen: "assets/images/taza3.webp" },
-    { id: 10, nombre: "Cuadro Canvas Arte Moderno", precio: 45.00, categoria: "cuadros", imagen: "assets/images/cuadro1.webp" },
-    { id: 11, nombre: "Cuadro Marco de Madera Fotografía", precio: 50.00, categoria: "cuadros", imagen: "assets/images/cuadro2.webp" },
-    { id: 12, nombre: "Set de 3 Mini Cuadros Ilustrados", precio: 60.00, categoria: "cuadros", imagen: "assets/images/cuadro3.webp" }
+    { id: 1, nombre: "Polo DTF Diseño Urbano", precio: 35.00, categoria: "textil", imagen: "assets/img_productos_opt/polo1.webp" },
+    { id: 2, nombre: "Polo Estampado Anime", precio: 38.00, categoria: "textil", imagen: "assets/img_productos_opt/polo2.webp" },
+    { id: 3, nombre: "Polera Oversize Minimalista", precio: 65.00, categoria: "textil", imagen: "assets/img_productos_opt/polo3.webp" },
+    { id: 4, nombre: "Polera con Capucha Streetwear", precio: 70.00, categoria: "textil", imagen: "assets/img_productos_opt/polo4.webp" },
+    { id: 5, nombre: "Gorra Personalizada Premium", precio: 25.00, categoria: "textil", imagen: "assets/img_productos_opt/polo5.webp" },
+    { id: 6, nombre: "Tote Bag de Algodón Ilustrado", precio: 20.00, categoria: "textil", imagen: "assets/img_productos_opt/polo6.webp" },
+    { id: 7, nombre: "Taza Mágica Sensible al Calor", precio: 22.00, categoria: "tazas", imagen: "assets/img_productos_opt/taza1.webp" },
+    { id: 8, nombre: "Taza Cerámica Programador", precio: 18.00, categoria: "tazas", imagen: "assets/img_productos_opt/taza2.webp" },
+    { id: 9, nombre: "Taza Térmica Acero Inoxidable", precio: 30.00, categoria: "tazas", imagen: "assets/img_productos_opt/taza3.webp" },
+    { id: 10, nombre: "Cuadro Canvas Arte Moderno", precio: 45.00, categoria: "cuadros", imagen: "assets/img_productos_opt/cuadro1.webp" },
+    { id: 11, nombre: "Cuadro Marco de Madera Fotografía", precio: 50.00, categoria: "cuadros", imagen: "assets/img_productos_opt/cuadro2.webp" },
+    { id: 12, nombre: "Set de 3 Mini Cuadros Ilustrados", precio: 60.00, categoria: "cuadros", imagen: "assets/img_productos_opt/cuadro3.webp" }
 ];
 
 // =========================================================================

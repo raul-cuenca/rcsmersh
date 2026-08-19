@@ -1,0 +1,6 @@
+# Carpetas de imágenes pesadas de origen
+assets/img_carrusel_originales/
+assets/img_productos_originales/
+
+# Módulo de dependencias de Node
+node_modules/
