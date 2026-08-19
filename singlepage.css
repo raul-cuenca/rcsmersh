@@ -671,28 +671,26 @@ body {
 }
 
 /* =========================================================================
-   10. DISEÑO RESPONSIVO (PANTALLAS MÓVILES Y ANGOSTAS)
+   10. DISEÑO RESPONSIVO (PANTALLAS MÓVILES Y ANGOSTAS - EJ. XIAOMI 393px)
    ========================================================================= */
 @media screen and (max-width: 768px) {
 
-    /* 1. Cabecera y Logo más compacto 🏷️ */
+    /* --- 1. CABECERA & NAV (HAMBURGUESA 🍔) --- */
     .logo {
         font-size: 1.2rem !important;
     }
 
-    /* 2. Activar Botón Hamburguesa 🍔 */
     .nav-toggle { 
         display: block !important; 
     }
     
-    /* 3. Desplegable vertical para el Menú 📜 */
     .nav-menu {
         position: absolute;
         top: 60px;
         left: 0;
         width: 100%;
         background: var(--white);
-        display: none; /* Se activa mediante JS con la clase .active */
+        display: none;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
         z-index: 1000;
     }
@@ -713,7 +711,72 @@ body {
         padding-left: 1rem;
     }
 
-    /* 4. Forzar 2 columnas de productos ✌️ */
+    /* --- 2. CARRUSEL MÁS AMPLIO & BOTONES UNIFORMES 🖼️ --- */
+    .carousel {
+        height: 390px !important; /* 👈 Incrementado para dar más presencia a la imagen */
+    }
+
+    .carousel-slide {
+        display: flex !important;
+        align-items: flex-end !important;
+        justify-content: center;
+        padding-bottom: 0.8rem !important;
+    }
+
+    .hero-overlay {
+        padding: 0 !important;
+        align-items: flex-end !important;
+        justify-content: center !important;
+    }
+
+    /* Caja de texto translúcida y compacta */
+    .carousel-caption {
+        width: 92% !important;
+        max-width: 360px !important;
+        height: 120px !important; 
+        min-height: auto !important;
+        margin: 0 auto !important;
+        padding: 0.5rem 0.8rem !important;
+        
+        background: rgba(15, 23, 42, 0.45) !important;
+        backdrop-filter: blur(3px);
+        border-radius: 8px !important;
+        
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        text-align: center;
+    }
+
+    .carousel-caption h2 {
+        font-size: 0.95rem !important;
+        margin-bottom: 0.25rem !important;
+        line-height: 1.15 !important;
+    }
+
+    .carousel-caption p {
+        font-size: 0.78rem !important;
+        line-height: 1.2 !important;
+        margin-bottom: 0.4rem !important;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Botones con ancho uniforme de 180px */
+    .carousel-caption .btn {
+        width: 180px !important; /* 👈 Ancho fijo e idéntico para todos */
+        max-width: 100% !important;
+        padding: 0.35rem 0.5rem !important;
+        font-size: 0.75rem !important;
+        margin-top: 0 !important;
+        text-align: center;
+    }
+
+    /* --- 3. TIENDA Y 2 COLUMNAS DE PRODUCTOS ✌️ --- */
     .products-grid {
         display: grid !important;
         grid-template-columns: repeat(2, 1fr) !important;
@@ -729,7 +792,6 @@ body {
         margin-bottom: 1.25rem;
     }
 
-    /* 5. Tarjetas ultra compactas 📦 */
     .product-card {
         min-width: 0 !important;
     }
