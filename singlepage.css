@@ -671,38 +671,40 @@ body {
 }
 
 /* =========================================================================
-   10. DISEÑO RESPONSIVO (PANTALLAS PEQUEÑAS Y MÓVILES)
+   10. DISEÑO RESPONSIVO (PANTALLAS MÓVILES Y ANGOSTAS)
    ========================================================================= */
-@media (max-width: 768px) {
-    
-    /* 1. Ajustes del Header y Logo 🏷️ */
+@media screen and (max-width: 768px) {
+
+    /* 1. Cabecera y Logo más compacto 🏷️ */
     .logo {
-        font-size: 1.25rem;
+        font-size: 1.2rem !important;
     }
 
-    /* 2. Menú Hamburguesa 🍔 */
+    /* 2. Activar Botón Hamburguesa 🍔 */
     .nav-toggle { 
-        display: block; 
+        display: block !important; 
     }
     
+    /* 3. Desplegable vertical para el Menú 📜 */
     .nav-menu {
         position: absolute;
-        top: 70px;
+        top: 60px;
         left: 0;
         width: 100%;
         background: var(--white);
-        display: none;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        display: none; /* Se activa mediante JS con la clase .active */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
     }
     
     .nav-menu.active { 
-        display: block; 
+        display: block !important; 
     }
     
     .nav-list {
         flex-direction: column;
         padding: 1rem;
-        gap: 1rem;
+        gap: 0.8rem;
     }
 
     .dropdown-menu {
@@ -711,41 +713,50 @@ body {
         padding-left: 1rem;
     }
 
-    /* 3. Cuadrícula de 2 columnas para productos 📦 */
+    /* 4. Forzar 2 columnas de productos ✌️ */
     .products-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr); /* 👈 Forzado a 2 columnas */
-        gap: 0.75rem;
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.5rem !important;
+    }
+
+    .container {
+        width: 96%;
+        padding: 0 0.2rem;
     }
 
     .category-block {
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.25rem;
     }
 
-    /* 4. Tarjeta de producto compacta 📱 */
+    /* 5. Tarjetas ultra compactas 📦 */
+    .product-card {
+        min-width: 0 !important;
+    }
+
     .product-card img {
-        height: 130px;
-        padding: 0.5rem;
+        height: 110px;
+        padding: 0.4rem;
     }
 
     .product-info {
-        padding: 0.6rem;
+        padding: 0.5rem;
     }
 
     .product-title {
-        font-size: 0.85rem;
-        line-height: 1.2;
-        margin-bottom: 0.3rem;
+        font-size: 0.8rem;
+        line-height: 1.15;
+        margin-bottom: 0.25rem;
     }
 
     .product-price {
-        font-size: 1rem;
-        margin-bottom: 0.4rem;
+        font-size: 0.95rem;
+        margin-bottom: 0.3rem;
     }
 
     .product-actions {
         flex-direction: column;
-        gap: 0.4rem;
+        gap: 0.3rem;
     }
 
     .product-actions .quantity-selector {
@@ -755,7 +766,7 @@ body {
 
     .product-actions .btn {
         width: 100%;
-        padding: 0.4rem 0.5rem;
-        font-size: 0.8rem;
+        padding: 0.35rem 0.2rem;
+        font-size: 0.75rem;
     }
 }
