@@ -671,10 +671,19 @@ body {
 }
 
 /* =========================================================================
-   10. DISEÑO RESPONSIVO (DISPOSITIVOS MÓVILES)
+   10. DISEÑO RESPONSIVO (PANTALLAS PEQUEÑAS Y MÓVILES)
    ========================================================================= */
 @media (max-width: 768px) {
-    .nav-toggle { display: block; }
+    
+    /* 1. Ajustes del Header y Logo 🏷️ */
+    .logo {
+        font-size: 1.25rem;
+    }
+
+    /* 2. Menú Hamburguesa 🍔 */
+    .nav-toggle { 
+        display: block; 
+    }
     
     .nav-menu {
         position: absolute;
@@ -686,22 +695,67 @@ body {
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
     
-    .nav-menu.active { display: block; }
+    .nav-menu.active { 
+        display: block; 
+    }
     
     .nav-list {
         flex-direction: column;
         padding: 1rem;
+        gap: 1rem;
     }
-    
+
     .dropdown-menu {
         position: static;
         box-shadow: none;
         padding-left: 1rem;
     }
-    
-    .hero-overlay { padding: 0 1.5rem; }
-    
-    .carousel-caption { padding: 1.2rem; }
-    .carousel-caption h2 { font-size: 1.8rem; }
-    .carousel-caption p { font-size: 1rem; }
+
+    /* 3. Cuadrícula de 2 columnas para productos 📦 */
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* 👈 Forzado a 2 columnas */
+        gap: 0.75rem;
+    }
+
+    .category-block {
+        margin-bottom: 1.5rem;
+    }
+
+    /* 4. Tarjeta de producto compacta 📱 */
+    .product-card img {
+        height: 130px;
+        padding: 0.5rem;
+    }
+
+    .product-info {
+        padding: 0.6rem;
+    }
+
+    .product-title {
+        font-size: 0.85rem;
+        line-height: 1.2;
+        margin-bottom: 0.3rem;
+    }
+
+    .product-price {
+        font-size: 1rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .product-actions {
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+
+    .product-actions .quantity-selector {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .product-actions .btn {
+        width: 100%;
+        padding: 0.4rem 0.5rem;
+        font-size: 0.8rem;
+    }
 }
