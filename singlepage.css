@@ -432,7 +432,7 @@ body {
 
 /* CADA DIAPOSITIVA: Posicionamiento absoluto obligatorio para superponerlas 🥞 */
 .carousel-slide {
-    position: absolute; /* 👈 Esta regla evita que se muestren una debajo de otra */
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
@@ -511,6 +511,29 @@ body {
     padding: 0.8rem 1rem;
     margin-top: auto;
 }
+
+/* Controles manuales del carrusel (Flechas) */
+.carousel-control {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(15, 23, 42, 0.5);
+    color: var(--white);
+    border: none;
+    font-size: 2rem;
+    padding: 0.5rem 0.8rem;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: var(--transition);
+    z-index: 10;
+}
+
+.carousel-control:hover {
+    background: var(--primary);
+}
+
+.carousel-control.prev { left: 1rem; }
+.carousel-control.next { right: 1rem; }
 
 /* =========================================================================
    7. SECCIÓN DE PRODUCTOS (GRID DE TIENDA)
@@ -713,7 +736,7 @@ body {
 
     /* --- 2. CARRUSEL MÁS AMPLIO & BOTONES UNIFORMES 🖼️ --- */
     .carousel {
-        height: 390px !important; /* 👈 Incrementado para dar más presencia a la imagen */
+        height: 390px !important;
     }
 
     .carousel-slide {
@@ -768,7 +791,7 @@ body {
 
     /* Botones con ancho uniforme de 180px */
     .carousel-caption .btn {
-        width: 180px !important; /* 👈 Ancho fijo e idéntico para todos */
+        width: 180px !important;
         max-width: 100% !important;
         padding: 0.35rem 0.5rem !important;
         font-size: 0.75rem !important;

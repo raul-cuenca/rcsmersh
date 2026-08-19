@@ -1,8 +1,10 @@
-// ==================== ESTADO DEL CARRITO ====================
+// =========================================================================
+// 1. ESTADO GLOBAL & DATOS DE PRODUCTOS
+// =========================================================================
 let carrito = [];
-let temporizadorCarrito = null; // Controla el cierre automático en 4s
+let temporizadorCarrito = null; // Controla la ocultación automática diferida del carrito
 
-// ==================== DATOS DE PRODUCTOS (12 ÍTEMS) ====================
+// Catálogo base de productos disponibles (12 ítems repartidos en 3 categorías)
 const productos = [
     { id: 1, nombre: "Polo DTF Diseño Urbano", precio: 35.00, categoria: "textil", imagen: "assets/images/polo1.webp" },
     { id: 2, nombre: "Polo Estampado Anime", precio: 38.00, categoria: "textil", imagen: "assets/images/polo2.webp" },
@@ -18,14 +20,18 @@ const productos = [
     { id: 12, nombre: "Set de 3 Mini Cuadros Ilustrados", precio: 60.00, categoria: "cuadros", imagen: "assets/images/cuadro3.webp" }
 ];
 
-// ==================== INICIALIZACIÓN ====================
+// =========================================================================
+// 2. INICIALIZACIÓN
+// =========================================================================
 document.addEventListener('DOMContentLoaded', () => {
     cargarProductos();
     inicializarMenuMovil();
     inicializarCarrusel();
 });
 
-// ==================== RENDERIZADO DE PRODUCTOS ====================
+// =========================================================================
+// 3. RENDERIZADO DE PRODUCTOS Y SECTORES DE TIENDA
+// =========================================================================
 function cargarProductos() {
     const gridTextil = document.getElementById('gridTextil');
     const gridTazas = document.getElementById('gridTazas');
@@ -62,7 +68,9 @@ function cargarProductos() {
     });
 }
 
-// ==================== MANEJO DE CANTIDADES (+ / -) ====================
+// =========================================================================
+// 4. MANEJO DE CANTIDADES EN LA TARJETA DE PRODUCTO (+ / -)
+// =========================================================================
 function incrementarCantidad(inputId) {
     const input = document.getElementById(inputId);
     if (input) {
@@ -77,7 +85,14 @@ function decrementarCantidad(inputId) {
     }
 }
 
-// ==================== LÓGICA DEL CARRITO & AUTO-CIERRE ====================
+// =========================================================================
+// 5. LÓGICA DEL CARRITO DE COMPRAS & EVENTOS DE VISIBILIDAD
+// =========================================================================
+
+/**
+ * Agrega un producto seleccionado al carrito utilizando la cantidad del input.
+ * @param {number} idProducto - ID único del producto.
+ */
 function agregarAlCarrito(idProducto) {
     const inputCant = document.getElementById(`cant-${idProducto}`);
     const cantidad = inputCant ? parseInt(inputCant.value) : 1;
@@ -99,11 +114,16 @@ function agregarAlCarrito(idProducto) {
         });
     }
 
-    if (inputCant) inputCant.value = 1; // Resetea el input a 1
+    if (inputCant) inputCant.value = 1; // Resetea el selector de la tarjeta a 1
     actualizarCarritoUI();
-    mostrarYProgramarCierreCarrito();
+    //mostrarYProgramarCierreCarrito(); // Muestra el carrito y lo oculta tras 2 segundos
 }
 
+/**
+ * Incrementa o decrementa la cantidad de un ítem dentro del panel del carrito.
+ * @param {number} idProducto - ID único del producto.
+ * @param {number} cambio - Variación (+1 o -1).
+ */
 function cambiarCantidadCarrito(idProducto, cambio) {
     const item = carrito.find(p => p.id === idProducto);
     if (!item) return;
@@ -116,20 +136,37 @@ function cambiarCantidadCarrito(idProducto, cambio) {
     }
 
     actualizarCarritoUI();
-    mostrarYProgramarCierreCarrito(); // Reinicia los 4s al cambiar cantidad dentro del carrito
+    mostrarYProgramarCierreCarrito(); // Reinicia la ventana de visibilidad tras cada ajuste
 }
 
+/**
+ * Elimina completamente un producto del carrito.
+ * @param {number} idProducto - ID único del producto a remover.
+ */
 function eliminarDelCarrito(idProducto) {
     carrito = carrito.filter(item => item.id !== idProducto);
     actualizarCarritoUI();
-    
+
     if (carrito.length === 0) {
-        cerrarCarrito();
-    } else {
+        // Si el carrito queda vacío, programa el cierre tras 4 segundos
         mostrarYProgramarCierreCarrito();
+    } else {
+        // Si aún quedan ítems, forzar que el panel continúe visible sin auto-cierre
+        const cartDropdown = document.getElementById('cartDropdown');
+        if (cartDropdown) {
+            cartDropdown.classList.add('active');
+        }
+
+        if (temporizadorCarrito) {
+            clearTimeout(temporizadorCarrito);
+            temporizadorCarrito = null;
+        }
     }
 }
 
+/**
+ * Actualiza la renderización HTML de los ítems del carrito, el contador e importe total.
+ */
 function actualizarCarritoUI() {
     const cartItemsContainer = document.getElementById('cartItems');
     const cartCount = document.getElementById('cartCount');
@@ -176,27 +213,28 @@ function actualizarCarritoUI() {
     if (cartTotal) cartTotal.textContent = totalPrecio.toFixed(2);
 }
 
-// Muestra el carrito por 4 segundos solo al AGREGAR o MODIFICAR productos
+/**
+ * Despliega el carrito y configura un temporizador de 2000 ms para ocultarlo automáticamente.
+ */
 function mostrarYProgramarCierreCarrito() {
     const cartDropdown = document.getElementById('cartDropdown');
     if (!cartDropdown) return;
 
-    // Aseguramos que el carrito esté visible
     cartDropdown.classList.add('active');
 
-    // Si ya existía un temporizador previo, lo reiniciamos
     if (temporizadorCarrito) {
         clearTimeout(temporizadorCarrito);
     }
 
-    // Programamos la ocultación tras 4000ms (4 segundos)
     temporizadorCarrito = setTimeout(() => {
         cartDropdown.classList.remove('active');
         temporizadorCarrito = null;
-    }, 4000);
+    }, 2000);
 }
 
-// Cierra el carrito manualmente y limpia cualquier temporizador activo 🛑
+/**
+ * Cierra manualmente el modal del carrito y detiene cualquier temporizador programado.
+ */
 function cerrarCarrito() {
     const cartDropdown = document.getElementById('cartDropdown');
     if (!cartDropdown) return;
@@ -209,7 +247,10 @@ function cerrarCarrito() {
     cartDropdown.classList.remove('active');
 }
 
-// Clic en el ícono del header 🛒
+/**
+ * Alterna (Abre/Cierra) la visibilidad del panel del carrito al presionar el botón del Header.
+ * Si se abre vaciando contenido, se cerrará solo tras 2 segundos.
+ */
 function toggleCarrito() {
     const cartDropdown = document.getElementById('cartDropdown');
     if (!cartDropdown) return;
@@ -221,11 +262,19 @@ function toggleCarrito() {
             clearTimeout(temporizadorCarrito);
             temporizadorCarrito = null;
         }
+
         cartDropdown.classList.add('active');
+
+        // Si se despliega en estado vacío, se auto-cierra en 2 segundos
+        if (carrito.length === 0) {
+            temporizadorCarrito = setTimeout(() => {
+                cerrarCarrito();
+            }, 2000);
+        }
     }
 }
 
-// Detectar clic FUERA del panel del carrito 🖱️
+// Escuchador de clics globales para detectar interacciones fuera del carrito 🖱️
 document.addEventListener('click', (event) => {
     const cartDropdown = document.getElementById('cartDropdown');
     const cartBtn = document.getElementById('cartBtn');
@@ -235,7 +284,8 @@ document.addEventListener('click', (event) => {
     if (cartDropdown.classList.contains('active')) {
         const esClicDentroDelCarrito = cartDropdown.contains(event.target);
         const esClicEnBotonHeader = cartBtn.contains(event.target);
-        const esClicEnBotonAccion = event.target.closest('.add-to-cart-btn, .qty-btn, .btn');
+        // Excepciones explícitas para evitar falsas detecciones de clics "fuera" al presionar botones internos
+        const esClicEnBotonAccion = event.target.closest('.add-to-cart-btn, .qty-btn, .btn, .cart-item-remove');
 
         if (!esClicDentroDelCarrito && !esClicEnBotonHeader && !esClicEnBotonAccion) {
             cerrarCarrito();
@@ -243,29 +293,29 @@ document.addEventListener('click', (event) => {
     }
 });
 
-// ==================== INTERFAZ DE USUARIO (Navegación & Carrusel) ====================
+// =========================================================================
+// 6. COMPONENTES INTERACTIVOS (Navegación Móvil & Carrusel Hero)
+// =========================================================================
 function inicializarMenuMovil() {
     const navToggle = document.getElementById('navToggle');
     const navMenu = document.getElementById('navMenu');
 
     if (navToggle && navMenu) {
-        // 1. Abrir/cerrar al presionar el botón hamburguesa 🍔
+        // Abrir/cerrar menú desplegable móvil
         navToggle.addEventListener('click', () => {
             navMenu.classList.toggle('active');
         });
 
-        // 2. Prevenir que el clic en "Tienda" desplace la página 🛑
+        // Prevenir salto inesperado al pulsar la categoría padre "Tienda"
         const dropdownToggle = navMenu.querySelector('.dropdown > a');
         if (dropdownToggle) {
             dropdownToggle.addEventListener('click', (event) => {
-                event.preventDefault(); // Detiene el salto a #tienda
+                event.preventDefault();
             });
         }
 
-        // 3. Seleccionar solo los enlaces de destino real (Inicio, Contacto, Categorías) 🔗
+        // Auto-cerrar el menú al hacer clic en un enlace directo
         const navLinks = navMenu.querySelectorAll('a:not(.dropdown > a)');
-
-        // 4. Ocultar el menú al seleccionar una opción de destino 🚀
         navLinks.forEach(link => {
             link.addEventListener('click', () => {
                 navMenu.classList.remove('active');
@@ -292,5 +342,6 @@ function inicializarCarrusel() {
     if (nextBtn) nextBtn.addEventListener('click', () => showSlide(currentSlide + 1));
     if (prevBtn) prevBtn.addEventListener('click', () => showSlide(currentSlide - 1));
 
+    // Desplazamiento automático cada 5 segundos
     setInterval(() => showSlide(currentSlide + 1), 5000);
 }
