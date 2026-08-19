@@ -1,15 +1,17 @@
-/* ==================== VARIABLES & RESET ==================== */
+/* =========================================================================
+   1. VARIABLES GLOBALES & RESETEO GENERAL
+   ========================================================================= */
 :root {
-    --primary: #2563eb;
-    --primary-dark: #1d4ed8;
-    --secondary: #0f172a;
-    --light-bg: #f8fafc;
-    --text: #334155;
-    --text-light: #64748b;
-    --white: #ffffff;
-    --border: #e2e8f0;
-    --radius: 12px;
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --primary: #2563eb;          /* Azul primario */
+    --primary-dark: #1d4ed8;     /* Azul oscuro para hover */
+    --secondary: #0f172a;        /* Azul muy oscuro/negro para títulos y textos */
+    --light-bg: #f8fafc;         /* Gris claro de fondo */
+    --text: #334155;             /* Color principal de cuerpo de texto */
+    --text-light: #64748b;       /* Gris medio para textos secundarios */
+    --white: #ffffff;            /* Blanco puro */
+    --border: #e2e8f0;           /* Color suave para bordes */
+    --radius: 12px;              /* Bordes redondeados estándar */
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Transición fluida */
 }
 
 * {
@@ -34,6 +36,9 @@ body {
     margin: 0 auto;
 }
 
+/* =========================================================================
+   2. BOTONES & COMPONENTES REUTILIZABLES
+   ========================================================================= */
 .btn {
     display: inline-block;
     padding: 0.6rem 1.2rem;
@@ -79,12 +84,14 @@ body {
     margin-bottom: 2rem;
 }
 
-/* ==================== HEADER & NAV ==================== */
+/* =========================================================================
+   3. CABECERA & BARRA DE NAVEGACIÓN (HEADER & NAV)
+   ========================================================================= */
 .header {
     position: sticky;
     top: 0;
     background: var(--white);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     z-index: 1000;
 }
 
@@ -131,7 +138,7 @@ body {
     cursor: pointer;
 }
 
-/* Dropdown Menu */
+/* Menú Desplegable (Dropdown) */
 .dropdown {
     position: relative;
 }
@@ -141,7 +148,7 @@ body {
     top: 100%;
     left: 0;
     background: var(--white);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     list-style: none;
     border-radius: 8px;
     display: none;
@@ -165,7 +172,7 @@ body {
     display: block;
 }
 
-/* Botón Carrito Header */
+/* Botón e Ícono del Carrito en la Barra Superior */
 .cart-wrapper {
     position: relative;
 }
@@ -194,11 +201,13 @@ body {
     justify-content: center;
 }
 
-/* ==================== CARRITO LATERAL (SIDEBAR) ==================== */
+/* =========================================================================
+   4. PANEL LATERAL DEL CARRITO (MODAL / SIDEBAR)
+   ========================================================================= */
 .cart-dropdown {
     position: fixed;
     top: 0;
-    right: -420px;
+    right: -420px; /* Oculto fuera de pantalla por defecto */
     width: 380px;
     max-width: 90vw;
     height: 100vh;
@@ -212,6 +221,7 @@ body {
     transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Estado activo cuando el carrito se despliega */
 .cart-dropdown.active {
     right: 0;
 }
@@ -258,7 +268,7 @@ body {
     margin-top: 2rem;
 }
 
-/* Ítem del Carrito */
+/* Ítem Individual del Carrito */
 .cart-item {
     display: flex;
     align-items: center;
@@ -335,7 +345,9 @@ body {
     color: var(--secondary);
 }
 
-/* ==================== SELECTOR DE CANTIDAD (+ / -) ➕➖ ==================== */
+/* =========================================================================
+   5. SELECTOR DE CANTIDADES DE PRODUCTOS (+ / -)
+   ========================================================================= */
 .quantity-selector {
     display: inline-flex;
     align-items: center;
@@ -376,7 +388,7 @@ body {
     font-weight: 600;
     font-size: 0.95rem;
     color: var(--secondary);
-    appearance: textfield; /* 👈 Propiedad estándar moderna */
+    appearance: textfield;
 }
 
 .qty-input::-webkit-outer-spin-button,
@@ -385,6 +397,7 @@ body {
     margin: 0;
 }
 
+/* Ajuste compacto de cantidad dentro del panel del carrito */
 .cart-qty {
     height: 28px;
 }
@@ -402,7 +415,9 @@ body {
     font-size: 0.85rem;
 }
 
-/* ==================== CARRUSEL HERO ==================== */
+/* =========================================================================
+   6. CARRUSEL HERO (BANNER PRINCIPAL)
+   ========================================================================= */
 .hero-section {
     padding: 0;
 }
@@ -482,7 +497,7 @@ body {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(0,0,0,0.6);
+    background: rgba(0, 0, 0, 0.6);
     color: var(--white);
     border: none;
     font-size: 2rem;
@@ -494,13 +509,15 @@ body {
 }
 
 .carousel-control:hover {
-    background: rgba(0,0,0,0.85);
+    background: rgba(0, 0, 0, 0.85);
 }
 
 .carousel-control.prev { left: 20px; }
 .carousel-control.next { right: 20px; }
 
-/* ==================== TIENDA ==================== */
+/* =========================================================================
+   7. SECCIÓN DE PRODUCTOS (GRID DE TIENDA)
+   ========================================================================= */
 .category-block {
     margin-bottom: 3rem;
 }
@@ -522,7 +539,7 @@ body {
     gap: 1.5rem;
 }
 
-/* Tarjeta de Producto 🌟 */
+/* Tarjeta de Producto */
 .product-card {
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -585,13 +602,15 @@ body {
     justify-content: space-between;
 }
 
-/* ==================== CONTACTO ==================== */
+/* =========================================================================
+   8. FORMULARIO DE CONTACTO
+   ========================================================================= */
 .form-container {
     max-width: 600px;
     background: var(--white);
     padding: 2rem;
     border-radius: var(--radius);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
 .form-group {
@@ -611,7 +630,9 @@ body {
     border-radius: 8px;
 }
 
-/* ==================== FOOTER ==================== */
+/* =========================================================================
+   9. PIE DE PÁGINA (FOOTER)
+   ========================================================================= */
 .footer {
     background-color: var(--secondary);
     color: var(--white);
@@ -652,9 +673,12 @@ body {
     font-size: 0.9rem;
 }
 
-/* ==================== RESPONSIVE ==================== */
+/* =========================================================================
+   10. DISEÑO RESPONSIVO (DISPOSITIVOS MÓVILES)
+   ========================================================================= */
 @media (max-width: 768px) {
     .nav-toggle { display: block; }
+    
     .nav-menu {
         position: absolute;
         top: 70px;
@@ -662,12 +686,24 @@ body {
         width: 100%;
         background: var(--white);
         display: none;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
+    
     .nav-menu.active { display: block; }
-    .nav-list { flex-direction: column; padding: 1rem; }
-    .dropdown-menu { position: static; box-shadow: none; padding-left: 1rem; }
+    
+    .nav-list {
+        flex-direction: column;
+        padding: 1rem;
+    }
+    
+    .dropdown-menu {
+        position: static;
+        box-shadow: none;
+        padding-left: 1rem;
+    }
+    
     .hero-overlay { padding: 0 1.5rem; }
+    
     .carousel-caption { padding: 1.2rem; }
     .carousel-caption h2 { font-size: 1.8rem; }
     .carousel-caption p { font-size: 1rem; }

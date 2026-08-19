@@ -50,7 +50,7 @@ function cargarProductos() {
                             <input type="number" id="cant-${prod.id}" value="1" min="1" class="qty-input" readonly>
                             <button class="qty-btn plus" onclick="incrementarCantidad('cant-${prod.id}')" aria-label="Aumentar cantidad">+</button>
                         </div>
-                        <button class="btn btn-primary" onclick="agregarAlCarrito(${prod.id})">Agregar</button>
+                        <button class="btn btn-primary add-to-cart-btn" onclick="agregarAlCarrito(${prod.id})">Agregar</button>
                     </div>
                 </div>
             </div>
@@ -122,7 +122,12 @@ function cambiarCantidadCarrito(idProducto, cambio) {
 function eliminarDelCarrito(idProducto) {
     carrito = carrito.filter(item => item.id !== idProducto);
     actualizarCarritoUI();
-    mostrarYProgramarCierreCarrito();
+    
+    if (carrito.length === 0) {
+        cerrarCarrito();
+    } else {
+        mostrarYProgramarCierreCarrito();
+    }
 }
 
 function actualizarCarritoUI() {
@@ -137,7 +142,7 @@ function actualizarCarritoUI() {
 
     if (carrito.length === 0) {
         cartItemsContainer.innerHTML = '<p class="cart-empty">El carrito está vacío</p>';
-        if (cartTotal) cartTotal.textContent = 'S/ 0.00';
+        if (cartTotal) cartTotal.textContent = '0.00';
         return;
     }
 
@@ -168,36 +173,75 @@ function actualizarCarritoUI() {
         `;
     });
 
-    if (cartTotal) cartTotal.textContent = `S/ ${totalPrecio.toFixed(2)}`;
+    if (cartTotal) cartTotal.textContent = totalPrecio.toFixed(2);
 }
 
-// Muestra el carrito y programa el temporizador de 4 segundos ⏱️
+// Muestra el carrito por 4 segundos solo al AGREGAR o MODIFICAR productos
 function mostrarYProgramarCierreCarrito() {
     const cartDropdown = document.getElementById('cartDropdown');
     if (!cartDropdown) return;
 
+    // Aseguramos que el carrito esté visible
     cartDropdown.classList.add('active');
 
-    // Limpia el temporizador anterior si existía
+    // Si ya existía un temporizador previo, lo reiniciamos
     if (temporizadorCarrito) {
         clearTimeout(temporizadorCarrito);
     }
 
-    // Oculta el panel automáticamente a los 4000 milisegundos (4s)
+    // Programamos la ocultación tras 4000ms (4 segundos)
     temporizadorCarrito = setTimeout(() => {
         cartDropdown.classList.remove('active');
+        temporizadorCarrito = null;
     }, 4000);
 }
 
+// Cierra el carrito manualmente y limpia cualquier temporizador activo 🛑
+function cerrarCarrito() {
+    const cartDropdown = document.getElementById('cartDropdown');
+    if (!cartDropdown) return;
+
+    if (temporizadorCarrito) {
+        clearTimeout(temporizadorCarrito);
+        temporizadorCarrito = null;
+    }
+
+    cartDropdown.classList.remove('active');
+}
+
+// Clic en el ícono del header 🛒
 function toggleCarrito() {
     const cartDropdown = document.getElementById('cartDropdown');
-    if (cartDropdown) {
-        cartDropdown.classList.toggle('active');
-        if (!cartDropdown.classList.contains('active') && temporizadorCarrito) {
+    if (!cartDropdown) return;
+
+    if (cartDropdown.classList.contains('active')) {
+        cerrarCarrito();
+    } else {
+        if (temporizadorCarrito) {
             clearTimeout(temporizadorCarrito);
+            temporizadorCarrito = null;
         }
+        cartDropdown.classList.add('active');
     }
 }
+
+// Detectar clic FUERA del panel del carrito 🖱️
+document.addEventListener('click', (event) => {
+    const cartDropdown = document.getElementById('cartDropdown');
+    const cartBtn = document.getElementById('cartBtn');
+
+    if (!cartDropdown || !cartBtn) return;
+
+    if (cartDropdown.classList.contains('active')) {
+        const esClicDentroDelCarrito = cartDropdown.contains(event.target);
+        const esClicEnBotonHeader = cartBtn.contains(event.target);
+        const esClicEnBotonAccion = event.target.closest('.add-to-cart-btn, .qty-btn, .btn');
+
+        if (!esClicDentroDelCarrito && !esClicEnBotonHeader && !esClicEnBotonAccion) {
+            cerrarCarrito();
+        }
+    }
+});
 
 // ==================== INTERFAZ DE USUARIO (Navegación & Carrusel) ====================
 function inicializarMenuMovil() {
@@ -229,5 +273,5 @@ function inicializarCarrusel() {
     if (nextBtn) nextBtn.addEventListener('click', () => showSlide(currentSlide + 1));
     if (prevBtn) prevBtn.addEventListener('click', () => showSlide(currentSlide - 1));
 
-    setInterval(() => showSlide(currentSlide + 1), 5000); // Cambio automático
+    setInterval(() => showSlide(currentSlide + 1), 5000);
 }

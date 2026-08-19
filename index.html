@@ -4,29 +4,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RCSmersh - Personalizados</title>
-    <!-- Estilos CSS principal -->
+    <title>RCSmersh - Merchandising & Regalos Personalizados</title>
+    
+    <!-- Hoja de Estilos Principal -->
     <link rel="stylesheet" href="singlepage.css">
-    <!-- Iconos Phosphor -->
+    
+    <!-- Librería de Íconos Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 
 <body>
 
-    <!-- ==================== HEADER / NAV ==================== -->
+    <!-- =========================================================================
+         BARRA DE NAVEGACIÓN Y CABECERA (HEADER)
+         ========================================================================= -->
     <header class="header">
         <div class="container nav-container">
+            <!-- Logo de la marca -->
             <a href="#inicio" class="logo">RCS<span>mersh</span></a>
 
+            <!-- Botón Hamburguesa para vista Móvil -->
             <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
                 <i class="ph ph-list"></i>
             </button>
 
+            <!-- Menú de Navegación Principal -->
             <nav class="nav-menu" id="navMenu">
                 <ul class="nav-list">
                     <li><a href="#inicio" class="nav-link active">Inicio</a></li>
                     <li class="dropdown">
                         <a href="#tienda" class="nav-link">Tienda <i class="ph ph-caret-down"></i></a>
+                        <!-- Submenú desplegable -->
                         <ul class="dropdown-menu">
                             <li><a href="#categoria-textil">Textil</a></li>
                             <li><a href="#categoria-tazas">Tazas</a></li>
@@ -37,9 +45,9 @@
                 </ul>
             </nav>
 
-            <!-- Botón del Carrito -->
+            <!-- Ícono y Contador del Carrito en el Header -->
             <div class="cart-wrapper">
-                <button class="cart-btn" id="cartBtn" aria-label="Ver carrito">
+                <button class="cart-btn" id="cartBtn" onclick="toggleCarrito()" aria-label="Ver carrito">
                     <i class="ph ph-shopping-cart"></i>
                     <span class="cart-count" id="cartCount">0</span>
                 </button>
@@ -47,19 +55,24 @@
         </div>
     </header>
 
-    <!-- ==================== PANEL LATERAL DEL CARRITO ==================== -->
+    <!-- =========================================================================
+         PANEL LATERAL DESPLEGABLE DEL CARRITO (MODAL / SIDEBAR)
+         ========================================================================= -->
     <aside class="cart-dropdown" id="cartDropdown">
+        <!-- Encabezado del Carrito -->
         <div class="cart-header">
             <h3><i class="ph ph-shopping-cart"></i> Tu Carrito</h3>
-            <button class="cart-close-btn" id="cartCloseBtn" aria-label="Cerrar carrito">
+            <button class="cart-close-btn" id="cartCloseBtn" onclick="cerrarCarrito()" aria-label="Cerrar carrito">
                 <i class="ph ph-x"></i>
             </button>
         </div>
-        
+
+        <!-- Lista dinámica de ítems agregados (inyectado por JS) -->
         <div class="cart-items" id="cartItems">
             <p class="cart-empty">El carrito está vacío</p>
         </div>
 
+        <!-- Pie del Carrito: Total y Botón de Pedido -->
         <div class="cart-footer">
             <div class="cart-total">
                 <span>Total:</span>
@@ -69,10 +82,15 @@
         </div>
     </aside>
 
+    <!-- =========================================================================
+         CONTENIDO PRINCIPAL
+         ========================================================================= -->
     <main>
-        <!-- ==================== SECCIÓN INICIO (CARRUSEL) ==================== -->
+        
+        <!-- SECCIÓN INICIO / HERO (Carrusel de imágenes) -->
         <section id="inicio" class="section hero-section">
             <div class="carousel" id="carousel">
+                <!-- Diapositiva 1: Textil -->
                 <div class="carousel-slide active">
                     <img src="assets/polos_sublimados.webp" alt="Polos Estampados DTF y Sublimados">
                     <div class="hero-overlay">
@@ -83,6 +101,8 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Diapositiva 2: Tazas -->
                 <div class="carousel-slide">
                     <img src="assets/tazas_sublimadas.webp" alt="Tazas Sublimables Personalizadas">
                     <div class="hero-overlay">
@@ -93,6 +113,8 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Diapositiva 3: Cuadros -->
                 <div class="carousel-slide">
                     <img src="assets/cuadros.sublimados.webp" alt="Cuadros en Aluminio Sublimables">
                     <div class="hero-overlay">
@@ -104,32 +126,40 @@
                     </div>
                 </div>
 
-                <button class="carousel-control prev" id="prevSlide" aria-label="Anterior"><i class="ph ph-caret-left"></i></button>
-                <button class="carousel-control next" id="nextSlide" aria-label="Siguiente"><i class="ph ph-caret-right"></i></button>
+                <!-- Botones de Navegación del Carrusel -->
+                <button class="carousel-control prev" id="prevSlide" aria-label="Anterior">
+                    <i class="ph ph-caret-left"></i>
+                </button>
+                <button class="carousel-control next" id="nextSlide" aria-label="Siguiente">
+                    <i class="ph ph-caret-right"></i>
+                </button>
             </div>
         </section>
 
-        <!-- ==================== SECCIÓN TIENDA ==================== -->
+        <!-- SECCIÓN TIENDA / CATÁLOGO DE PRODUCTOS -->
         <section id="tienda" class="section container">
             <h2 class="section-title">Nuestros Productos</h2>
 
+            <!-- Bloque Categoría: Textil -->
             <div id="categoria-textil" class="category-block">
                 <h3 class="category-title"><i class="ph ph-t-shirt"></i> Textil (Polos DTF y Sublimados)</h3>
                 <div class="products-grid" id="gridTextil"></div>
             </div>
 
+            <!-- Bloque Categoría: Tazas -->
             <div id="categoria-tazas" class="category-block">
                 <h3 class="category-title"><i class="ph ph-coffee"></i> Tazas Sublimables</h3>
                 <div class="products-grid" id="gridTazas"></div>
             </div>
 
+            <!-- Bloque Categoría: Cuadros -->
             <div id="categoria-cuadros" class="category-block">
                 <h3 class="category-title"><i class="ph ph-image"></i> Cuadros Personalizados en Aluminio</h3>
                 <div class="products-grid" id="gridCuadros"></div>
             </div>
         </section>
 
-        <!-- ==================== SECCIÓN CONTACTO ==================== -->
+        <!-- SECCIÓN CONTACTO Y COTIZACIÓN -->
         <section id="contacto" class="section bg-light">
             <div class="container form-container">
                 <h2 class="section-title">Ponte en Contacto</h2>
@@ -158,11 +188,13 @@
         </section>
     </main>
 
-    <!-- ==================== FOOTER ==================== -->
+    <!-- =========================================================================
+         PIE DE PÁGINA (FOOTER)
+         ========================================================================= -->
     <footer class="footer">
         <div class="container footer-content">
             <div class="footer-brand">
-                <h3>Merch<span>Store</span></h3>
+                <h3>RCS<span>mersh</span></h3>
                 <p>Especialistas en sublimación, estampado DTF y regalos personalizados a full color.</p>
             </div>
             <div class="footer-links">
@@ -185,6 +217,7 @@
         </div>
     </footer>
 
+    <!-- Lógica JavaScript Principal -->
     <script src="singlepage.js"></script>
 </body>
 
