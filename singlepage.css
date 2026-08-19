@@ -422,6 +422,7 @@ body {
     padding: 0;
 }
 
+/* Contenedor principal que fija el área de las diapositivas 🖼️ */
 .carousel {
     position: relative;
     width: 100%;
@@ -429,8 +430,9 @@ body {
     overflow: hidden;
 }
 
+/* CADA DIAPOSITIVA: Posicionamiento absoluto obligatorio para superponerlas 🥞 */
 .carousel-slide {
-    position: absolute;
+    position: absolute; /* 👈 Esta regla evita que se muestren una debajo de otra */
     top: 0;
     left: 0;
     width: 100%;
@@ -449,6 +451,7 @@ body {
     object-fit: cover;
 }
 
+/* Capa oscura superpuesta 🕶️ */
 .hero-overlay {
     position: absolute;
     top: 0;
@@ -466,54 +469,48 @@ body {
     padding: 0 10%;
 }
 
+/* Tarjeta contenedora de texto con dimensiones uniformes 📐 */
 .carousel-caption {
     color: var(--white);
-    max-width: 600px;
-    background: rgba(15, 23, 42, 0.45);
-    padding: 2rem;
+    width: 100%;
+    max-width: 520px;
+    min-height: 280px;
+    background: rgba(15, 23, 42, 0.55);
+    padding: 2.2rem;
     border-radius: var(--radius);
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(6px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
 }
 
 .carousel-caption h2 {
-    font-size: 2.8rem;
+    font-size: 2.2rem;
     font-weight: 800;
-    line-height: 1.2;
-    margin-bottom: 0.75rem;
+    line-height: 1.25;
+    margin-bottom: 0.5rem;
     color: var(--white);
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
 }
 
 .carousel-caption p {
-    font-size: 1.25rem;
-    font-weight: 500;
+    font-size: 1.1rem;
+    font-weight: 400;
     margin-bottom: 1.5rem;
     color: #f1f5f9;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
+    flex-grow: 1;
 }
 
-.carousel-control {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.6);
-    color: var(--white);
-    border: none;
-    font-size: 2rem;
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: var(--transition);
-    z-index: 10;
+/* Botones azules estandarizados 🔵 */
+.carousel-caption .btn {
+    width: 240px;
+    text-align: center;
+    padding: 0.8rem 1rem;
+    margin-top: auto;
 }
-
-.carousel-control:hover {
-    background: rgba(0, 0, 0, 0.85);
-}
-
-.carousel-control.prev { left: 20px; }
-.carousel-control.next { right: 20px; }
 
 /* =========================================================================
    7. SECCIÓN DE PRODUCTOS (GRID DE TIENDA)
