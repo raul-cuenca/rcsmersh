@@ -249,8 +249,27 @@ function inicializarMenuMovil() {
     const navMenu = document.getElementById('navMenu');
 
     if (navToggle && navMenu) {
+        // 1. Abrir/cerrar al presionar el botón hamburguesa 🍔
         navToggle.addEventListener('click', () => {
             navMenu.classList.toggle('active');
+        });
+
+        // 2. Prevenir que el clic en "Tienda" desplace la página 🛑
+        const dropdownToggle = navMenu.querySelector('.dropdown > a');
+        if (dropdownToggle) {
+            dropdownToggle.addEventListener('click', (event) => {
+                event.preventDefault(); // Detiene el salto a #tienda
+            });
+        }
+
+        // 3. Seleccionar solo los enlaces de destino real (Inicio, Contacto, Categorías) 🔗
+        const navLinks = navMenu.querySelectorAll('a:not(.dropdown > a)');
+
+        // 4. Ocultar el menú al seleccionar una opción de destino 🚀
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                navMenu.classList.remove('active');
+            });
         });
     }
 }
