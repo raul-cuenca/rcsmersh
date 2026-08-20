@@ -2,5 +2,10 @@
 assets/img_carrusel_originales/
 assets/img_productos_originales/
 
+# Archivos fuera de single page
+cotizador.html
+precios.json
+script.js
+
 # Módulo de dependencias de Node
 node_modules/
