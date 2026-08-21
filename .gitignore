@@ -7,5 +7,8 @@ cotizador.html
 precios.json
 script.js
 
+# Base de datos Supabase
+db_supabase/querySQL
+
 # Módulo de dependencias de Node
 node_modules/

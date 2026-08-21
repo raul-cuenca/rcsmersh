@@ -5,10 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RCSmersh - Merchandising & Regalos Personalizados</title>
-    
+
     <!-- Hoja de Estilos Principal -->
     <link rel="stylesheet" href="singlepage.css">
-    
+
     <!-- Librería de Íconos Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
@@ -59,7 +59,6 @@
          2. PANEL LATERAL DESPLEGABLE DEL CARRITO (MODAL / SIDEBAR)
          ========================================================================= -->
     <aside class="cart-dropdown" id="cartDropdown">
-        <!-- Encabezado del Carrito -->
         <div class="cart-header">
             <h3><i class="ph ph-shopping-cart"></i> Tu Carrito</h3>
             <button class="cart-close-btn" id="cartCloseBtn" onclick="cerrarCarrito()" aria-label="Cerrar carrito">
@@ -67,12 +66,10 @@
             </button>
         </div>
 
-        <!-- Lista dinámica de ítems agregados (inyectado por JS) -->
         <div class="cart-items" id="cartItems">
             <p class="cart-empty">El carrito está vacío</p>
         </div>
 
-        <!-- Pie del Carrito: Total y Botón de Pedido -->
         <div class="cart-footer">
             <div class="cart-total">
                 <span>Total:</span>
@@ -86,11 +83,10 @@
          3. CONTENIDO PRINCIPAL (MAIN)
          ========================================================================= -->
     <main>
-        
+
         <!-- SECCIÓN INICIO / HERO (Carrusel de imágenes) -->
         <section id="inicio" class="section hero-section">
             <div class="carousel" id="carousel">
-                <!-- Diapositiva 1: Textil -->
                 <div class="carousel-slide active">
                     <img src="assets/img_carrusel_opt/polos_sublimados.webp" alt="Polos Estampados DTF y Sublimados" loading="eager">
                     <div class="hero-overlay">
@@ -102,7 +98,6 @@
                     </div>
                 </div>
 
-                <!-- Diapositiva 2: Tazas -->
                 <div class="carousel-slide">
                     <img src="assets/img_carrusel_opt/tazas_sublimadas.webp" alt="Tazas Sublimables Personalizadas" loading="lazy">
                     <div class="hero-overlay">
@@ -114,7 +109,6 @@
                     </div>
                 </div>
 
-                <!-- Diapositiva 3: Cuadros -->
                 <div class="carousel-slide">
                     <img src="assets/img_carrusel_opt/cuadros_sublimados.webp" alt="Cuadros en Aluminio Sublimables" loading="lazy">
                     <div class="hero-overlay">
@@ -126,7 +120,6 @@
                     </div>
                 </div>
 
-                <!-- Botones de Navegación del Carrusel -->
                 <button class="carousel-control prev" id="prevSlide" aria-label="Anterior">
                     <i class="ph ph-caret-left"></i>
                 </button>
@@ -156,6 +149,12 @@
             <div id="categoria-cuadros" class="category-block">
                 <h3 class="category-title"><i class="ph ph-image"></i> Cuadros Personalizados en Aluminio</h3>
                 <div class="products-grid" id="gridCuadros"></div>
+            </div>
+
+            <!-- Bloque Categoría: Otros productos registrados -->
+            <div id="categoria-otros" class="category-block" style="display: none;">
+                <h3 class="category-title"><i class="ph ph-package"></i> Otros Productos</h3>
+                <div class="products-grid" id="gridOtros"></div>
             </div>
         </section>
 
@@ -217,8 +216,11 @@
         </div>
     </footer>
 
-    <!-- Lógica JavaScript Principal -->
+    <!-- SDK Supabase y Lógica JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
     <script src="singlepage.js"></script>
+
 </body>
 
 </html>

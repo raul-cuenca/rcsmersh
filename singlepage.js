@@ -2,53 +2,102 @@
 // 1. ESTADO GLOBAL & DATOS DE PRODUCTOS
 // =========================================================================
 let carrito = [];
-let temporizadorCarrito = null; // Controla la ocultación automática diferida del carrito
+let temporizadorCarrito = null; 
+let listaProductosGlobal = []; // Guarda todos los productos (Supabase o Locales)
 
-// Catálogo base de productos disponibles (12 ítems repartidos en 3 categorías)
-const productos = [
-    { id: 1, nombre: "Polo DTF Diseño Urbano", precio: 35.00, categoria: "textil", imagen: "assets/img_productos_opt/polo1.webp" },
-    { id: 2, nombre: "Polo Estampado Anime", precio: 38.00, categoria: "textil", imagen: "assets/img_productos_opt/polo2.webp" },
-    { id: 3, nombre: "Polera Oversize Minimalista", precio: 65.00, categoria: "textil", imagen: "assets/img_productos_opt/polo3.webp" },
-    { id: 4, nombre: "Polera con Capucha Streetwear", precio: 70.00, categoria: "textil", imagen: "assets/img_productos_opt/polo4.webp" },
-    { id: 5, nombre: "Gorra Personalizada Premium", precio: 25.00, categoria: "textil", imagen: "assets/img_productos_opt/polo5.webp" },
-    { id: 6, nombre: "Tote Bag de Algodón Ilustrado", precio: 20.00, categoria: "textil", imagen: "assets/img_productos_opt/polo6.webp" },
-    { id: 7, nombre: "Taza Mágica Sensible al Calor", precio: 22.00, categoria: "tazas", imagen: "assets/img_productos_opt/taza1.webp" },
-    { id: 8, nombre: "Taza Cerámica Programador", precio: 18.00, categoria: "tazas", imagen: "assets/img_productos_opt/taza2.webp" },
-    { id: 9, nombre: "Taza Térmica Acero Inoxidable", precio: 30.00, categoria: "tazas", imagen: "assets/img_productos_opt/taza3.webp" },
-    { id: 10, nombre: "Cuadro Canvas Arte Moderno", precio: 45.00, categoria: "cuadros", imagen: "assets/img_productos_opt/cuadro1.webp" },
-    { id: 11, nombre: "Cuadro Marco de Madera Fotografía", precio: 50.00, categoria: "cuadros", imagen: "assets/img_productos_opt/cuadro2.webp" },
-    { id: 12, nombre: "Set de 3 Mini Cuadros Ilustrados", precio: 60.00, categoria: "cuadros", imagen: "assets/img_productos_opt/cuadro3.webp" }
+// Catálogo base de respaldo
+const productosBase = [
+    { id: '1', nombre: "Polo DTF Diseño Urbano", precio: 35.00, categoria: "textil", imagen: "assets/img_productos_opt/polo1.webp" },
+    { id: '2', nombre: "Polo Estampado Anime", precio: 38.00, categoria: "textil", imagen: "assets/img_productos_opt/polo2.webp" },
+    { id: '3', nombre: "Polera Oversize Minimalista", precio: 65.00, categoria: "textil", imagen: "assets/img_productos_opt/polo3.webp" },
+    { id: '4', nombre: "Polera con Capucha Streetwear", precio: 70.00, categoria: "textil", imagen: "assets/img_productos_opt/polo4.webp" },
+    { id: '5', nombre: "Gorra Personalizada Premium", precio: 25.00, categoria: "textil", imagen: "assets/img_productos_opt/polo5.webp" },
+    { id: '6', nombre: "Tote Bag de Algodón Ilustrado", precio: 20.00, categoria: "textil", imagen: "assets/img_productos_opt/polo6.webp" },
+    { id: '7', nombre: "Taza Mágica Sensible al Calor", precio: 22.00, categoria: "tazas", imagen: "assets/img_productos_opt/taza1.webp" },
+    { id: '8', nombre: "Taza Cerámica Programador", precio: 18.00, categoria: "tazas", imagen: "assets/img_productos_opt/taza2.webp" },
+    { id: '9', nombre: "Taza Térmica Acero Inoxidable", precio: 30.00, categoria: "tazas", imagen: "assets/img_productos_opt/taza3.webp" },
+    { id: '10', nombre: "Cuadro Canvas Arte Moderno", precio: 45.00, categoria: "cuadros", imagen: "assets/img_productos_opt/cuadro1.webp" },
+    { id: '11', nombre: "Cuadro Marco de Madera Fotografía", precio: 50.00, categoria: "cuadros", imagen: "assets/img_productos_opt/cuadro2.webp" },
+    { id: '12', nombre: "Set de 3 Mini Cuadros Ilustrados", precio: 60.00, categoria: "cuadros", imagen: "assets/img_productos_opt/cuadro3.webp" }
 ];
 
 // =========================================================================
 // 2. INICIALIZACIÓN
 // =========================================================================
 document.addEventListener('DOMContentLoaded', () => {
-    cargarProductos();
     inicializarMenuMovil();
     inicializarCarrusel();
+    obtenerProductos(); // Carga desde Supabase
 });
 
 // =========================================================================
-// 3. RENDERIZADO DE PRODUCTOS Y SECTORES DE TIENDA
+// 3. CONSULTA A SUPABASE & RENDERIZADO UNIFICADO
 // =========================================================================
-function cargarProductos() {
+async function obtenerProductos() {
+    try {
+        let productosProcesados = [];
+
+        if (window.supabaseClient) {
+            const { data, error } = await window.supabaseClient
+                .from('productos')
+                .select('*')
+                .eq('activo', true)
+                .order('created_at', { ascending: false });
+
+            if (!error && data && data.length > 0) {
+                // Normalizar estructura de Supabase a formato estándar
+                productosProcesados = data.map(item => ({
+                    id: String(item.id),
+                    nombre: item.modelo || item.nombre || 'Producto Sin Nombre',
+                    precio: parseFloat(item.precio_vta_unit || item.precio || 0),
+                    imagen: item.imagen_url || item.imagen || 'assets/img_productos_opt/polo1.webp',
+                    categoria: (item.categoria || 'textil').toLowerCase()
+                }));
+            }
+        }
+
+        // Si Supabase está vacío o sin datos, usa la lista base de respaldo
+        if (productosProcesados.length === 0) {
+            productosProcesados = productosBase;
+        }
+
+        listaProductosGlobal = productosProcesados;
+        renderizarProductosUnificados(listaProductosGlobal);
+
+    } catch (err) {
+        console.error('Error al cargar productos:', err);
+        listaProductosGlobal = productosBase;
+        renderizarProductosUnificados(listaProductosGlobal);
+    }
+}
+
+/**
+ * Renderiza todas las tarjetas garantizando visualización 100% uniforme
+ */
+function renderizarProductosUnificados(productos) {
     const gridTextil = document.getElementById('gridTextil');
     const gridTazas = document.getElementById('gridTazas');
     const gridCuadros = document.getElementById('gridCuadros');
+    const gridOtros = document.getElementById('gridOtros');
+    const secOtros = document.getElementById('categoria-otros');
 
     if (!gridTextil || !gridTazas || !gridCuadros) return;
 
     gridTextil.innerHTML = '';
     gridTazas.innerHTML = '';
     gridCuadros.innerHTML = '';
+    if (gridOtros) gridOtros.innerHTML = '';
+
+    let hayOtros = false;
 
     productos.forEach(prod => {
         const cardHTML = `
             <div class="product-card">
-                <img src="${prod.imagen}" alt="${prod.nombre}" loading="lazy">
+                <div class="product-img-wrapper">
+                    <img src="${prod.imagen}" alt="${prod.nombre}" loading="lazy">
+                </div>
                 <div class="product-info">
-                    <h3 class="product-title">${prod.nombre}</h3>
+                    <h3 class="product-title" title="${prod.nombre}">${prod.nombre}</h3>
                     <div class="product-price">S/ ${prod.precio.toFixed(2)}</div>
                     <div class="product-actions">
                         <div class="quantity-selector">
@@ -56,20 +105,37 @@ function cargarProductos() {
                             <input type="number" id="cant-${prod.id}" value="1" min="1" class="qty-input" readonly>
                             <button class="qty-btn plus" onclick="incrementarCantidad('cant-${prod.id}')" aria-label="Aumentar cantidad">+</button>
                         </div>
-                        <button class="btn btn-primary add-to-cart-btn" onclick="agregarAlCarrito(${prod.id})">Agregar</button>
+                        <button class="btn btn-primary add-to-cart-btn" onclick="agregarAlCarrito('${prod.id}')">Agregar</button>
                     </div>
                 </div>
             </div>
         `;
 
-        if (prod.categoria === 'textil') gridTextil.innerHTML += cardHTML;
-        else if (prod.categoria === 'tazas') gridTazas.innerHTML += cardHTML;
-        else if (prod.categoria === 'cuadros') gridCuadros.innerHTML += cardHTML;
+        const cat = (prod.categoria || '').toLowerCase();
+
+        if (cat.includes('textil') || cat.includes('polo')) {
+            gridTextil.innerHTML += cardHTML;
+        } else if (cat.includes('taza')) {
+            gridTazas.innerHTML += cardHTML;
+        } else if (cat.includes('cuadro')) {
+            gridCuadros.innerHTML += cardHTML;
+        } else {
+            if (gridOtros) {
+                gridOtros.innerHTML += cardHTML;
+                hayOtros = true;
+            } else {
+                gridTextil.innerHTML += cardHTML; // Fallback
+            }
+        }
     });
+
+    if (secOtros) {
+        secOtros.style.display = hayOtros ? 'block' : 'none';
+    }
 }
 
 // =========================================================================
-// 4. MANEJO DE CANTIDADES EN LA TARJETA DE PRODUCTO (+ / -)
+// 4. MANEJO DE CANTIDADES (+ / -)
 // =========================================================================
 function incrementarCantidad(inputId) {
     const input = document.getElementById(inputId);
@@ -86,21 +152,18 @@ function decrementarCantidad(inputId) {
 }
 
 // =========================================================================
-// 5. LÓGICA DEL CARRITO DE COMPRAS & EVENTOS DE VISIBILIDAD
+// 5. LÓGICA DEL CARRITO DE COMPRAS
 // =========================================================================
-
-/**
- * Agrega un producto seleccionado al carrito utilizando la cantidad del input.
- * @param {number} idProducto - ID único del producto.
- */
 function agregarAlCarrito(idProducto) {
-    const inputCant = document.getElementById(`cant-${idProducto}`);
+    const idStr = String(idProducto);
+    const inputCant = document.getElementById(`cant-${idStr}`);
     const cantidad = inputCant ? parseInt(inputCant.value) : 1;
-    const producto = productos.find(p => p.id === idProducto);
+    
+    const producto = listaProductosGlobal.find(p => String(p.id) === idStr);
 
     if (!producto) return;
 
-    const itemExistente = carrito.find(item => item.id === idProducto);
+    const itemExistente = carrito.find(item => String(item.id) === idStr);
 
     if (itemExistente) {
         itemExistente.cantidad += cantidad;
@@ -114,48 +177,37 @@ function agregarAlCarrito(idProducto) {
         });
     }
 
-    if (inputCant) inputCant.value = 1; // Resetea el selector de la tarjeta a 1
+    if (inputCant) inputCant.value = 1;
     actualizarCarritoUI();
-    //mostrarYProgramarCierreCarrito(); // Muestra el carrito y lo oculta tras 2 segundos
+    mostrarYProgramarCierreCarrito();
 }
 
-/**
- * Incrementa o decrementa la cantidad de un ítem dentro del panel del carrito.
- * @param {number} idProducto - ID único del producto.
- * @param {number} cambio - Variación (+1 o -1).
- */
 function cambiarCantidadCarrito(idProducto, cambio) {
-    const item = carrito.find(p => p.id === idProducto);
+    const idStr = String(idProducto);
+    const item = carrito.find(p => String(p.id) === idStr);
     if (!item) return;
 
     item.cantidad += cambio;
 
     if (item.cantidad <= 0) {
-        eliminarDelCarrito(idProducto);
+        eliminarDelCarrito(idStr);
         return;
     }
 
     actualizarCarritoUI();
-    mostrarYProgramarCierreCarrito(); // Reinicia la ventana de visibilidad tras cada ajuste
+    mostrarYProgramarCierreCarrito();
 }
 
-/**
- * Elimina completamente un producto del carrito.
- * @param {number} idProducto - ID único del producto a remover.
- */
 function eliminarDelCarrito(idProducto) {
-    carrito = carrito.filter(item => item.id !== idProducto);
+    const idStr = String(idProducto);
+    carrito = carrito.filter(item => String(item.id) !== idStr);
     actualizarCarritoUI();
 
     if (carrito.length === 0) {
-        // Si el carrito queda vacío, programa el cierre tras 4 segundos
         mostrarYProgramarCierreCarrito();
     } else {
-        // Si aún quedan ítems, forzar que el panel continúe visible sin auto-cierre
         const cartDropdown = document.getElementById('cartDropdown');
-        if (cartDropdown) {
-            cartDropdown.classList.add('active');
-        }
+        if (cartDropdown) cartDropdown.classList.add('active');
 
         if (temporizadorCarrito) {
             clearTimeout(temporizadorCarrito);
@@ -164,9 +216,6 @@ function eliminarDelCarrito(idProducto) {
     }
 }
 
-/**
- * Actualiza la renderización HTML de los ítems del carrito, el contador e importe total.
- */
 function actualizarCarritoUI() {
     const cartItemsContainer = document.getElementById('cartItems');
     const cartCount = document.getElementById('cartCount');
@@ -198,14 +247,14 @@ function actualizarCarritoUI() {
                     <small>Precio unit.: S/ ${item.precio.toFixed(2)}</small>
                     <div class="cart-item-actions">
                         <div class="quantity-selector cart-qty">
-                            <button class="qty-btn minus" onclick="cambiarCantidadCarrito(${item.id}, -1)">-</button>
+                            <button class="qty-btn minus" onclick="cambiarCantidadCarrito('${item.id}', -1)">-</button>
                             <span class="qty-value">${item.cantidad}</span>
-                            <button class="qty-btn plus" onclick="cambiarCantidadCarrito(${item.id}, 1)">+</button>
+                            <button class="qty-btn plus" onclick="cambiarCantidadCarrito('${item.id}', 1)">+</button>
                         </div>
                         <span class="cart-item-price">S/ ${subtotal.toFixed(2)}</span>
                     </div>
                 </div>
-                <button class="cart-item-remove" onclick="eliminarDelCarrito(${item.id})" title="Eliminar producto">&times;</button>
+                <button class="cart-item-remove" onclick="eliminarDelCarrito('${item.id}')" title="Eliminar producto">&times;</button>
             </div>
         `;
     });
@@ -213,9 +262,6 @@ function actualizarCarritoUI() {
     if (cartTotal) cartTotal.textContent = totalPrecio.toFixed(2);
 }
 
-/**
- * Despliega el carrito y configura un temporizador de 2000 ms para ocultarlo automáticamente.
- */
 function mostrarYProgramarCierreCarrito() {
     const cartDropdown = document.getElementById('cartDropdown');
     if (!cartDropdown) return;
@@ -232,9 +278,6 @@ function mostrarYProgramarCierreCarrito() {
     }, 2000);
 }
 
-/**
- * Cierra manualmente el modal del carrito y detiene cualquier temporizador programado.
- */
 function cerrarCarrito() {
     const cartDropdown = document.getElementById('cartDropdown');
     if (!cartDropdown) return;
@@ -247,10 +290,6 @@ function cerrarCarrito() {
     cartDropdown.classList.remove('active');
 }
 
-/**
- * Alterna (Abre/Cierra) la visibilidad del panel del carrito al presionar el botón del Header.
- * Si se abre vaciando contenido, se cerrará solo tras 2 segundos.
- */
 function toggleCarrito() {
     const cartDropdown = document.getElementById('cartDropdown');
     if (!cartDropdown) return;
@@ -265,7 +304,6 @@ function toggleCarrito() {
 
         cartDropdown.classList.add('active');
 
-        // Si se despliega en estado vacío, se auto-cierra en 2 segundos
         if (carrito.length === 0) {
             temporizadorCarrito = setTimeout(() => {
                 cerrarCarrito();
@@ -274,7 +312,6 @@ function toggleCarrito() {
     }
 }
 
-// Escuchador de clics globales para detectar interacciones fuera del carrito 🖱️
 document.addEventListener('click', (event) => {
     const cartDropdown = document.getElementById('cartDropdown');
     const cartBtn = document.getElementById('cartBtn');
@@ -284,7 +321,6 @@ document.addEventListener('click', (event) => {
     if (cartDropdown.classList.contains('active')) {
         const esClicDentroDelCarrito = cartDropdown.contains(event.target);
         const esClicEnBotonHeader = cartBtn.contains(event.target);
-        // Excepciones explícitas para evitar falsas detecciones de clics "fuera" al presionar botones internos
         const esClicEnBotonAccion = event.target.closest('.add-to-cart-btn, .qty-btn, .btn, .cart-item-remove');
 
         if (!esClicDentroDelCarrito && !esClicEnBotonHeader && !esClicEnBotonAccion) {
@@ -294,19 +330,17 @@ document.addEventListener('click', (event) => {
 });
 
 // =========================================================================
-// 6. COMPONENTES INTERACTIVOS (Navegación Móvil & Carrusel Hero)
+// 6. NAVEGACIÓN MÓVIL Y CARRUSEL
 // =========================================================================
 function inicializarMenuMovil() {
     const navToggle = document.getElementById('navToggle');
     const navMenu = document.getElementById('navMenu');
 
     if (navToggle && navMenu) {
-        // Abrir/cerrar menú desplegable móvil
         navToggle.addEventListener('click', () => {
             navMenu.classList.toggle('active');
         });
 
-        // Prevenir salto inesperado al pulsar la categoría padre "Tienda"
         const dropdownToggle = navMenu.querySelector('.dropdown > a');
         if (dropdownToggle) {
             dropdownToggle.addEventListener('click', (event) => {
@@ -314,7 +348,6 @@ function inicializarMenuMovil() {
             });
         }
 
-        // Auto-cerrar el menú al hacer clic en un enlace directo
         const navLinks = navMenu.querySelectorAll('a:not(.dropdown > a)');
         navLinks.forEach(link => {
             link.addEventListener('click', () => {
@@ -342,6 +375,5 @@ function inicializarCarrusel() {
     if (nextBtn) nextBtn.addEventListener('click', () => showSlide(currentSlide + 1));
     if (prevBtn) prevBtn.addEventListener('click', () => showSlide(currentSlide - 1));
 
-    // Desplazamiento automático cada 5 segundos
     setInterval(() => showSlide(currentSlide + 1), 5000);
 }
