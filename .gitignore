@@ -1,6 +1,8 @@
 # Carpetas de imágenes pesadas de origen
 assets/img_carrusel_originales/
 assets/img_productos_originales/
+assets/img_productos_opt/
+assets/img_carrusel_opt/    
 
 # Archivos fuera de single page
 cotizador.html
@@ -8,7 +10,8 @@ precios.json
 script.js
 
 # Base de datos Supabase
-db_supabase/querySQL
+db_supabase/SQL_create
+db_supabase/SQL_insert
 
 # Módulo de dependencias de Node
 node_modules/

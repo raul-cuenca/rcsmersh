@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // =========================================================================
-// 3. CONSULTA A SUPABASE & RENDERIZADO UNIFICADO
+// 3. CONSULTA A SUPABASE & RENDERIZADO POR CATEGORÍA DIRECTA
 // =========================================================================
 async function obtenerProductos() {
     try {
@@ -44,19 +44,21 @@ async function obtenerProductos() {
                 .eq('activo', true)
                 .order('created_at', { ascending: false });
 
-            if (!error && data && data.length > 0) {
-                // Normalizar estructura de Supabase a formato estándar
+            if (error) {
+                console.error('Error al consultar Supabase:', error.message);
+            } else if (data && data.length > 0) {
                 productosProcesados = data.map(item => ({
                     id: String(item.id),
-                    nombre: item.modelo || item.nombre || 'Producto Sin Nombre',
+                    nombre: item.nombre_producto || item.nombre || 'Producto Sin Nombre',
                     precio: parseFloat(item.precio_vta_unit || item.precio || 0),
                     imagen: item.imagen_url || item.imagen || 'assets/img_productos_opt/polo1.webp',
-                    categoria: (item.categoria || 'textil').toLowerCase()
+                    categoria: (item.categoria || item.sub_categoria || '').toString().trim().toUpperCase(),
+                    descripcion: item.descripcion || '',
+                    color: item.color || ''
                 }));
             }
         }
 
-        // Si Supabase está vacío o sin datos, usa la lista base de respaldo
         if (productosProcesados.length === 0) {
             productosProcesados = productosBase;
         }
@@ -65,15 +67,12 @@ async function obtenerProductos() {
         renderizarProductosUnificados(listaProductosGlobal);
 
     } catch (err) {
-        console.error('Error al cargar productos:', err);
+        console.error('Error general al obtener productos:', err);
         listaProductosGlobal = productosBase;
         renderizarProductosUnificados(listaProductosGlobal);
     }
 }
 
-/**
- * Renderiza todas las tarjetas garantizando visualización 100% uniforme
- */
 function renderizarProductosUnificados(productos) {
     const gridTextil = document.getElementById('gridTextil');
     const gridTazas = document.getElementById('gridTazas');
@@ -111,20 +110,21 @@ function renderizarProductosUnificados(productos) {
             </div>
         `;
 
-        const cat = (prod.categoria || '').toLowerCase();
+        const cat = prod.categoria;
 
-        if (cat.includes('textil') || cat.includes('polo')) {
+        // Evaluación directa según el valor exacto en la columna
+        if (cat === 'POLO' || cat === 'POLOS' || cat === 'TEXTIL') {
             gridTextil.innerHTML += cardHTML;
-        } else if (cat.includes('taza')) {
+        } else if (cat === 'TAZA' || cat === 'TAZAS') {
             gridTazas.innerHTML += cardHTML;
-        } else if (cat.includes('cuadro')) {
+        } else if (cat === 'CUADRO' || cat === 'CUADROS') {
             gridCuadros.innerHTML += cardHTML;
         } else {
             if (gridOtros) {
                 gridOtros.innerHTML += cardHTML;
                 hayOtros = true;
             } else {
-                gridTextil.innerHTML += cardHTML; // Fallback
+                gridTextil.innerHTML += cardHTML;
             }
         }
     });
