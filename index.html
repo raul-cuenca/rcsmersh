@@ -20,32 +20,27 @@
          ========================================================================= -->
     <header class="header">
         <div class="container nav-container">
-            <!-- Logo de la marca -->
             <a href="#inicio" class="logo">RCS<span>mersh</span></a>
 
-            <!-- Botón Hamburguesa para vista Móvil -->
             <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
                 <i class="ph ph-list"></i>
             </button>
 
-            <!-- Menú de Navegación Principal -->
             <nav class="nav-menu" id="navMenu">
                 <ul class="nav-list">
                     <li><a href="#inicio" class="nav-link active">Inicio</a></li>
                     <li class="dropdown">
                         <a href="#tienda" class="nav-link">Tienda <i class="ph ph-caret-down"></i></a>
-                        <!-- Submenú desplegable -->
                         <ul class="dropdown-menu">
-                            <li><a href="#categoria-textil">Textil</a></li>
-                            <li><a href="#categoria-tazas">Tazas</a></li>
-                            <li><a href="#categoria-cuadros">Cuadros</a></li>
+                            <li><a href="#tienda" onclick="filtrarCategoria('TEXTIL')">Textil</a></li>
+                            <li><a href="#tienda" onclick="filtrarCategoria('TAZA')">Tazas</a></li>
+                            <li><a href="#tienda" onclick="filtrarCategoria('CUADRO')">Cuadros</a></li>
                         </ul>
                     </li>
                     <li><a href="#contacto" class="nav-link">Contacto</a></li>
                 </ul>
             </nav>
 
-            <!-- Ícono y Contador del Carrito en el Header -->
             <div class="cart-wrapper">
                 <button class="cart-btn" id="cartBtn" onclick="toggleCarrito()" aria-label="Ver carrito">
                     <i class="ph ph-shopping-cart"></i>
@@ -56,7 +51,7 @@
     </header>
 
     <!-- =========================================================================
-         2. PANEL LATERAL DESPLEGABLE DEL CARRITO (MODAL / SIDEBAR)
+         2. PANEL LATERAL DESPLEGABLE DEL CARRITO (DRAWER)
          ========================================================================= -->
     <aside class="cart-dropdown" id="cartDropdown">
         <div class="cart-header">
@@ -75,7 +70,9 @@
                 <span>Total:</span>
                 <span>S/ <span id="cartTotal">0.00</span></span>
             </div>
-            <button class="btn btn-primary btn-block" id="checkoutBtn">Pedir por WhatsApp</button>
+            <button class="btn btn-whatsapp btn-block" id="checkoutBtn" onclick="enviarPedidoWhatsApp()">
+                <i class="ph ph-whatsapp-logo"></i> Pedir por WhatsApp
+            </button>
         </div>
     </aside>
 
@@ -84,7 +81,7 @@
          ========================================================================= -->
     <main>
 
-        <!-- SECCIÓN INICIO / HERO (Carrusel de imágenes) -->
+        <!-- SECCIÓN INICIO / HERO -->
         <section id="inicio" class="section hero-section">
             <div class="carousel" id="carousel">
                 <div class="carousel-slide active">
@@ -93,7 +90,7 @@
                         <div class="carousel-caption">
                             <h2>Polos Estampados DTF & Sublimación</h2>
                             <p>Diseños vibrantes y de alta durabilidad en telas seleccionadas.</p>
-                            <a href="#categoria-textil" class="btn btn-primary">Ver Catálogo Textil</a>
+                            <a href="#tienda" onclick="filtrarCategoria('TEXTIL')" class="btn btn-primary">Ver Catálogo Textil</a>
                         </div>
                     </div>
                 </div>
@@ -104,7 +101,7 @@
                         <div class="carousel-caption">
                             <h2>Tazas Sublimables Premium</h2>
                             <p>El regalo o merchandising corporativo perfecto.</p>
-                            <a href="#categoria-tazas" class="btn btn-primary">Ver Tazas</a>
+                            <a href="#tienda" onclick="filtrarCategoria('TAZA')" class="btn btn-primary">Ver Tazas</a>
                         </div>
                     </div>
                 </div>
@@ -115,7 +112,7 @@
                         <div class="carousel-caption">
                             <h2>Cuadros en Aluminio Full Color</h2>
                             <p>Impresión de alta definición con acabado metálico brillante.</p>
-                            <a href="#categoria-cuadros" class="btn btn-primary">Ver Cuadros</a>
+                            <a href="#tienda" onclick="filtrarCategoria('CUADRO')" class="btn btn-primary">Ver Cuadros</a>
                         </div>
                     </div>
                 </div>
@@ -129,33 +126,21 @@
             </div>
         </section>
 
-        <!-- SECCIÓN TIENDA / CATÁLOGO DE PRODUCTOS -->
+        <!-- SECCIÓN TIENDA / CATÁLOGO OPTIMIZADO -->
         <section id="tienda" class="section container">
             <h2 class="section-title">Nuestros Productos</h2>
+            <p class="section-subtitle">Explora nuestras colecciones exclusivas y personaliza tu pedido.</p>
 
-            <!-- Bloque Categoría: Textil -->
-            <div id="categoria-textil" class="category-block">
-                <h3 class="category-title"><i class="ph ph-t-shirt"></i> Textil (Polos DTF y Sublimados)</h3>
-                <div class="products-grid" id="gridTextil"></div>
+            <!-- BARRA DE FILTROS POR CATEGORÍA (PILLS) -->
+            <div class="category-filters">
+                <button class="filter-pill active" onclick="filtrarCategoria('TODOS', this)">Todos</button>
+                <button class="filter-pill" onclick="filtrarCategoria('TEXTIL', this)">Polos</button>
+                <button class="filter-pill" onclick="filtrarCategoria('TAZA', this)">Tazas</button>
+                <button class="filter-pill" onclick="filtrarCategoria('CUADRO', this)">Cuadros</button>
             </div>
 
-            <!-- Bloque Categoría: Tazas -->
-            <div id="categoria-tazas" class="category-block">
-                <h3 class="category-title"><i class="ph ph-coffee"></i> Tazas Sublimables</h3>
-                <div class="products-grid" id="gridTazas"></div>
-            </div>
-
-            <!-- Bloque Categoría: Cuadros -->
-            <div id="categoria-cuadros" class="category-block">
-                <h3 class="category-title"><i class="ph ph-image"></i> Cuadros Personalizados en Aluminio</h3>
-                <div class="products-grid" id="gridCuadros"></div>
-            </div>
-
-            <!-- Bloque Categoría: Otros productos registrados -->
-            <div id="categoria-otros" class="category-block" style="display: none;">
-                <h3 class="category-title"><i class="ph ph-package"></i> Otros Productos</h3>
-                <div class="products-grid" id="gridOtros"></div>
-            </div>
+            <!-- GRID PRINCIPAL UNIFICADO -->
+            <div class="products-grid" id="gridProductos"></div>
         </section>
 
         <!-- SECCIÓN CONTACTO Y COTIZACIÓN -->
@@ -199,9 +184,9 @@
             <div class="footer-links">
                 <h4>Categorías</h4>
                 <ul>
-                    <li><a href="#categoria-textil">Textil</a></li>
-                    <li><a href="#categoria-tazas">Tazas</a></li>
-                    <li><a href="#categoria-cuadros">Cuadros</a></li>
+                    <li><a href="#tienda" onclick="filtrarCategoria('TEXTIL')">Textil</a></li>
+                    <li><a href="#tienda" onclick="filtrarCategoria('TAZA')">Tazas</a></li>
+                    <li><a href="#tienda" onclick="filtrarCategoria('CUADRO')">Cuadros</a></li>
                 </ul>
             </div>
             <div class="footer-contact">

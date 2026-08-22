@@ -1,24 +1,60 @@
 // =========================================================================
-// 1. ESTADO GLOBAL & DATOS DE PRODUCTOS
+// 1. ESTADO GLOBAL DE LA APLICACIÓN
 // =========================================================================
 let carrito = [];
 let temporizadorCarrito = null; 
-let listaProductosGlobal = []; // Guarda todos los productos (Supabase o Locales)
+let listaProductosGlobal = [];
+let categoriaFiltroActual = 'TODOS';
 
-// Catálogo base de respaldo
+// Guarda las variaciones seleccionadas activas en cada tarjeta { prodId: { talla: 'M', color: 'Azul' } }
+let variacionesSeleccionadas = {};
+
+// Catálogo base de respaldo consolidado por modelo de producto
 const productosBase = [
-    { id: '1', nombre: "Polo DTF Diseño Urbano", precio: 35.00, categoria: "textil", imagen: "assets/img_productos_opt/polo1.webp" },
-    { id: '2', nombre: "Polo Estampado Anime", precio: 38.00, categoria: "textil", imagen: "assets/img_productos_opt/polo2.webp" },
-    { id: '3', nombre: "Polera Oversize Minimalista", precio: 65.00, categoria: "textil", imagen: "assets/img_productos_opt/polo3.webp" },
-    { id: '4', nombre: "Polera con Capucha Streetwear", precio: 70.00, categoria: "textil", imagen: "assets/img_productos_opt/polo4.webp" },
-    { id: '5', nombre: "Gorra Personalizada Premium", precio: 25.00, categoria: "textil", imagen: "assets/img_productos_opt/polo5.webp" },
-    { id: '6', nombre: "Tote Bag de Algodón Ilustrado", precio: 20.00, categoria: "textil", imagen: "assets/img_productos_opt/polo6.webp" },
-    { id: '7', nombre: "Taza Mágica Sensible al Calor", precio: 22.00, categoria: "tazas", imagen: "assets/img_productos_opt/taza1.webp" },
-    { id: '8', nombre: "Taza Cerámica Programador", precio: 18.00, categoria: "tazas", imagen: "assets/img_productos_opt/taza2.webp" },
-    { id: '9', nombre: "Taza Térmica Acero Inoxidable", precio: 30.00, categoria: "tazas", imagen: "assets/img_productos_opt/taza3.webp" },
-    { id: '10', nombre: "Cuadro Canvas Arte Moderno", precio: 45.00, categoria: "cuadros", imagen: "assets/img_productos_opt/cuadro1.webp" },
-    { id: '11', nombre: "Cuadro Marco de Madera Fotografía", precio: 50.00, categoria: "cuadros", imagen: "assets/img_productos_opt/cuadro2.webp" },
-    { id: '12', nombre: "Set de 3 Mini Cuadros Ilustrados", precio: 60.00, categoria: "cuadros", imagen: "assets/img_productos_opt/cuadro3.webp" }
+    { 
+        id: '1', 
+        nombre: "Polo Manga Corta Premier", 
+        precioMin: 25.00, 
+        precioMax: 28.00, 
+        categoria: "TEXTIL", 
+        imagen: "assets/img_productos_opt/polo1.webp",
+        tallas: ['S', 'M', 'L', 'XL'],
+        colores: [{ nombre: 'Crema', hex: '#E2D7C5' }, { nombre: 'Azul', hex: '#2563EB' }, { nombre: 'Oscuro', hex: '#1E293B' }],
+        badge: 'Más Vendido'
+    },
+    { 
+        id: '2', 
+        nombre: "Polo Sublimado Full Color", 
+        precioMin: 28.00, 
+        precioMax: 28.00, 
+        categoria: "TEXTIL", 
+        imagen: "assets/img_productos_opt/polo2.webp",
+        tallas: ['S', 'M', 'L', 'XL'],
+        colores: [{ nombre: 'Azul', hex: '#2563EB' }, { nombre: 'Negro', hex: '#000000' }],
+        badge: 'Premium'
+    },
+    { 
+        id: '3', 
+        nombre: "Taza Personalizada Sublimada", 
+        precioMin: 25.00, 
+        precioMax: 25.00, 
+        categoria: "TAZA", 
+        imagen: "assets/img_productos_opt/taza1.webp",
+        tallas: [],
+        colores: [],
+        badge: ''
+    },
+    { 
+        id: '4', 
+        nombre: "Cuadro Sublimado Aluminio", 
+        precioMin: 28.00, 
+        precioMax: 28.00, 
+        categoria: "CUADRO", 
+        imagen: "assets/img_productos_opt/cuadro1.webp",
+        tallas: [],
+        colores: [],
+        badge: ''
+    }
 ];
 
 // =========================================================================
@@ -27,11 +63,11 @@ const productosBase = [
 document.addEventListener('DOMContentLoaded', () => {
     inicializarMenuMovil();
     inicializarCarrusel();
-    obtenerProductos(); // Carga desde Supabase
+    obtenerProductos();
 });
 
 // =========================================================================
-// 3. CONSULTA A SUPABASE & RENDERIZADO POR CATEGORÍA DIRECTA
+// 3. CONSULTA A SUPABASE Y PROCESAMIENTO CONSOLIDADO
 // =========================================================================
 async function obtenerProductos() {
     try {
@@ -47,15 +83,26 @@ async function obtenerProductos() {
             if (error) {
                 console.error('Error al consultar Supabase:', error.message);
             } else if (data && data.length > 0) {
-                productosProcesados = data.map(item => ({
-                    id: String(item.id),
-                    nombre: item.nombre_producto || item.nombre || 'Producto Sin Nombre',
-                    precio: parseFloat(item.precio_vta_unit || item.precio || 0),
-                    imagen: item.imagen_url || item.imagen || 'assets/img_productos_opt/polo1.webp',
-                    categoria: (item.categoria || item.sub_categoria || '').toString().trim().toUpperCase(),
-                    descripcion: item.descripcion || '',
-                    color: item.color || ''
-                }));
+                productosProcesados = data.map(item => {
+                    const catClean = (item.categoria || item.sub_categoria || '').toString().trim().toUpperCase();
+                    const esTextil = catClean.includes('POLO') || catClean.includes('TEXTIL');
+
+                    return {
+                        id: String(item.id),
+                        nombre: item.nombre_producto || item.nombre || 'Producto Personalizado',
+                        precioMin: parseFloat(item.precio_vta_unit || item.precio || 25.00),
+                        precioMax: parseFloat(item.precio_vta_unit || item.precio || 28.00),
+                        imagen: item.imagen_url || item.imagen || 'assets/img_productos_opt/polo1.webp',
+                        categoria: catClean.includes('TAZA') ? 'TAZA' : (catClean.includes('CUADRO') ? 'CUADRO' : 'TEXTIL'),
+                        tallas: esTextil ? ['S', 'M', 'L', 'XL'] : [],
+                        colores: esTextil ? [
+                            { nombre: 'Crema', hex: '#E2D7C5' }, 
+                            { nombre: 'Azul', hex: '#2563EB' }, 
+                            { nombre: 'Oscuro', hex: '#1E293B' }
+                        ] : [],
+                        badge: esTextil ? 'Destacado' : ''
+                    };
+                });
             }
         }
 
@@ -64,133 +111,174 @@ async function obtenerProductos() {
         }
 
         listaProductosGlobal = productosProcesados;
-        renderizarProductosUnificados(listaProductosGlobal);
+        renderizarCatalogo();
 
     } catch (err) {
         console.error('Error general al obtener productos:', err);
         listaProductosGlobal = productosBase;
-        renderizarProductosUnificados(listaProductosGlobal);
+        renderizarCatalogo();
     }
 }
 
-function renderizarProductosUnificados(productos) {
-    const gridTextil = document.getElementById('gridTextil');
-    const gridTazas = document.getElementById('gridTazas');
-    const gridCuadros = document.getElementById('gridCuadros');
-    const gridOtros = document.getElementById('gridOtros');
-    const secOtros = document.getElementById('categoria-otros');
+// =========================================================================
+// 4. RENDERIZADO Y FILTRADO DEL CATÁLOGO (UI/UX)
+// =========================================================================
+function filtrarCategoria(categoria, btnElement) {
+    categoriaFiltroActual = categoria;
 
-    if (!gridTextil || !gridTazas || !gridCuadros) return;
+    // Actualizar clase activa de los botones pill
+    if (btnElement) {
+        document.querySelectorAll('.filter-pill').forEach(pill => pill.classList.remove('active'));
+        btnElement.classList.add('active');
+    }
 
-    gridTextil.innerHTML = '';
-    gridTazas.innerHTML = '';
-    gridCuadros.innerHTML = '';
-    if (gridOtros) gridOtros.innerHTML = '';
+    renderizarCatalogo();
+}
 
-    let hayOtros = false;
+function renderizarCatalogo() {
+    const grid = document.getElementById('gridProductos');
+    if (!grid) return;
 
-    productos.forEach(prod => {
+    grid.innerHTML = '';
+
+    const productosFiltrados = listaProductosGlobal.filter(p => {
+        if (categoriaFiltroActual === 'TODOS') return true;
+        return p.categoria === categoriaFiltroActual;
+    });
+
+    if (productosFiltrados.length === 0) {
+        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #64748b;">No hay productos disponibles en esta categoría.</p>';
+        return;
+    }
+
+    productosFiltrados.forEach(prod => {
+        // Inicializar variaciones por defecto para cada producto
+        if (!variacionesSeleccionadas[prod.id]) {
+            variacionesSeleccionadas[prod.id] = {
+                talla: prod.tallas.length > 0 ? prod.tallas[0] : null,
+                color: prod.colores.length > 0 ? prod.colores[0].nombre : null
+            };
+        }
+
+        const sel = variacionesSeleccionadas[prod.id];
+
+        // Texto de Rango de Precios
+        const precioTexto = prod.precioMin === prod.precioMax 
+            ? `S/ ${prod.precioMin.toFixed(2)}` 
+            : `S/ ${prod.precioMin.toFixed(2)} - S/ ${prod.precioMax.toFixed(2)}`;
+
+        // HTML Bloque de Tallas
+        let htmlTallas = '';
+        if (prod.tallas.length > 0) {
+            htmlTallas = `
+                <div class="variant-block">
+                    <div class="variant-label">Talla:</div>
+                    <div class="size-selector">
+                        ${prod.tallas.map(t => `
+                            <button class="size-pill ${sel.talla === t ? 'active' : ''}" 
+                                onclick="seleccionarVariacion('${prod.id}', 'talla', '${t}')">${t}</button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // HTML Bloque de Colores
+        let htmlColores = '';
+        if (prod.colores.length > 0) {
+            htmlColores = `
+                <div class="variant-block">
+                    <div class="variant-label">Color:</div>
+                    <div class="color-selector">
+                        ${prod.colores.map(c => `
+                            <button class="color-swatch ${sel.color === c.nombre ? 'active' : ''}" 
+                                style="background-color: ${c.hex};" 
+                                title="${c.nombre}"
+                                onclick="seleccionarVariacion('${prod.id}', 'color', '${c.nombre}')"></button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
         const cardHTML = `
             <div class="product-card">
+                ${prod.badge ? `<span class="product-badge">${prod.badge}</span>` : ''}
                 <div class="product-img-wrapper">
                     <img src="${prod.imagen}" alt="${prod.nombre}" loading="lazy">
                 </div>
                 <div class="product-info">
-                    <h3 class="product-title" title="${prod.nombre}">${prod.nombre}</h3>
-                    <div class="product-price">S/ ${prod.precio.toFixed(2)}</div>
-                    <div class="product-actions">
-                        <div class="quantity-selector">
-                            <button class="qty-btn minus" onclick="decrementarCantidad('cant-${prod.id}')" aria-label="Disminuir cantidad">-</button>
-                            <input type="number" id="cant-${prod.id}" value="1" min="1" class="qty-input" readonly>
-                            <button class="qty-btn plus" onclick="incrementarCantidad('cant-${prod.id}')" aria-label="Aumentar cantidad">+</button>
-                        </div>
-                        <button class="btn btn-primary add-to-cart-btn" onclick="agregarAlCarrito('${prod.id}')">Agregar</button>
+                    <div>
+                        <h3 class="product-title">${prod.nombre}</h3>
+                        <div class="product-unit-text">Precio unit: ${precioTexto}</div>
+                        <div class="product-price-range">${precioTexto}</div>
+                        ${htmlTallas}
+                        ${htmlColores}
                     </div>
+                    <button class="btn btn-primary btn-block add-to-cart-btn" onclick="agregarAlCarrito('${prod.id}')">
+                        Agregar al Carrito
+                    </button>
                 </div>
             </div>
         `;
 
-        const cat = prod.categoria;
-
-        // Evaluación directa según el valor exacto en la columna
-        if (cat === 'POLO' || cat === 'POLOS' || cat === 'TEXTIL') {
-            gridTextil.innerHTML += cardHTML;
-        } else if (cat === 'TAZA' || cat === 'TAZAS') {
-            gridTazas.innerHTML += cardHTML;
-        } else if (cat === 'CUADRO' || cat === 'CUADROS') {
-            gridCuadros.innerHTML += cardHTML;
-        } else {
-            if (gridOtros) {
-                gridOtros.innerHTML += cardHTML;
-                hayOtros = true;
-            } else {
-                gridTextil.innerHTML += cardHTML;
-            }
-        }
+        grid.innerHTML += cardHTML;
     });
+}
 
-    if (secOtros) {
-        secOtros.style.display = hayOtros ? 'block' : 'none';
+function seleccionarVariacion(idProducto, tipo, valor) {
+    if (!variacionesSeleccionadas[idProducto]) {
+        variacionesSeleccionadas[idProducto] = {};
     }
+    variacionesSeleccionadas[idProducto][tipo] = valor;
+    renderizarCatalogo();
 }
 
 // =========================================================================
-// 4. MANEJO DE CANTIDADES (+ / -)
-// =========================================================================
-function incrementarCantidad(inputId) {
-    const input = document.getElementById(inputId);
-    if (input) {
-        input.value = parseInt(input.value) + 1;
-    }
-}
-
-function decrementarCantidad(inputId) {
-    const input = document.getElementById(inputId);
-    if (input && parseInt(input.value) > 1) {
-        input.value = parseInt(input.value) - 1;
-    }
-}
-
-// =========================================================================
-// 5. LÓGICA DEL CARRITO DE COMPRAS
+// 5. LÓGICA DEL CARRITO DE COMPRAS (SLIDE-OVER)
 // =========================================================================
 function agregarAlCarrito(idProducto) {
     const idStr = String(idProducto);
-    const inputCant = document.getElementById(`cant-${idStr}`);
-    const cantidad = inputCant ? parseInt(inputCant.value) : 1;
-    
     const producto = listaProductosGlobal.find(p => String(p.id) === idStr);
 
     if (!producto) return;
 
-    const itemExistente = carrito.find(item => String(item.id) === idStr);
+    const seleccion = variacionesSeleccionadas[idStr] || {};
+    const tallaElegida = seleccion.talla || '';
+    const colorElegido = seleccion.color || '';
+
+    // Generar identificador único combinando ID + Talla + Color
+    const itemKey = `${idStr}_${tallaElegida}_${colorElegido}`;
+
+    const itemExistente = carrito.find(item => item.key === itemKey);
 
     if (itemExistente) {
-        itemExistente.cantidad += cantidad;
+        itemExistente.cantidad += 1;
     } else {
         carrito.push({
+            key: itemKey,
             id: producto.id,
             nombre: producto.nombre,
-            precio: producto.precio,
+            precio: producto.precioMin,
             imagen: producto.imagen,
-            cantidad: cantidad
+            talla: tallaElegida,
+            color: colorElegido,
+            cantidad: 1
         });
     }
 
-    if (inputCant) inputCant.value = 1;
     actualizarCarritoUI();
     mostrarYProgramarCierreCarrito();
 }
 
-function cambiarCantidadCarrito(idProducto, cambio) {
-    const idStr = String(idProducto);
-    const item = carrito.find(p => String(p.id) === idStr);
+function cambiarCantidadCarrito(itemKey, cambio) {
+    const item = carrito.find(p => p.key === itemKey);
     if (!item) return;
 
     item.cantidad += cambio;
 
     if (item.cantidad <= 0) {
-        eliminarDelCarrito(idStr);
+        eliminarDelCarrito(itemKey);
         return;
     }
 
@@ -198,21 +286,15 @@ function cambiarCantidadCarrito(idProducto, cambio) {
     mostrarYProgramarCierreCarrito();
 }
 
-function eliminarDelCarrito(idProducto) {
-    const idStr = String(idProducto);
-    carrito = carrito.filter(item => String(item.id) !== idStr);
+function eliminarDelCarrito(itemKey) {
+    carrito = carrito.filter(item => item.key !== itemKey);
     actualizarCarritoUI();
 
     if (carrito.length === 0) {
-        mostrarYProgramarCierreCarrito();
+        cerrarCarrito();
     } else {
         const cartDropdown = document.getElementById('cartDropdown');
         if (cartDropdown) cartDropdown.classList.add('active');
-
-        if (temporizadorCarrito) {
-            clearTimeout(temporizadorCarrito);
-            temporizadorCarrito = null;
-        }
     }
 }
 
@@ -239,27 +321,64 @@ function actualizarCarritoUI() {
         const subtotal = item.precio * item.cantidad;
         totalPrecio += subtotal;
 
+        // Construir detalles de variación (ej. Talla: M | Color: Azul)
+        let metaDetalles = [];
+        if (item.talla) metaDetalles.push(`Talla: ${item.talla}`);
+        if (item.color) metaDetalles.push(`Color: ${item.color}`);
+        const metaTexto = metaDetalles.length > 0 ? metaDetalles.join(' | ') : 'Personalizado';
+
         cartItemsContainer.innerHTML += `
             <div class="cart-item">
                 <img src="${item.imagen}" alt="${item.nombre}" class="cart-item-img">
                 <div class="cart-item-details">
-                    <strong>${item.nombre}</strong>
-                    <small>Precio unit.: S/ ${item.precio.toFixed(2)}</small>
-                    <div class="cart-item-actions">
-                        <div class="quantity-selector cart-qty">
-                            <button class="qty-btn minus" onclick="cambiarCantidadCarrito('${item.id}', -1)">-</button>
-                            <span class="qty-value">${item.cantidad}</span>
-                            <button class="qty-btn plus" onclick="cambiarCantidadCarrito('${item.id}', 1)">+</button>
+                    <h4 class="cart-item-title">${item.nombre}</h4>
+                    <div class="cart-item-meta">${metaTexto}</div>
+                    <div class="cart-item-bottom">
+                        <div class="cart-stepper">
+                            <button onclick="cambiarCantidadCarrito('${item.key}', -1)">-</button>
+                            <span>${item.cantidad}</span>
+                            <button onclick="cambiarCantidadCarrito('${item.key}', 1)">+</button>
                         </div>
                         <span class="cart-item-price">S/ ${subtotal.toFixed(2)}</span>
                     </div>
                 </div>
-                <button class="cart-item-remove" onclick="eliminarDelCarrito('${item.id}')" title="Eliminar producto">&times;</button>
+                <button class="cart-item-remove-subtle" onclick="eliminarDelCarrito('${item.key}')" title="Eliminar producto">
+                    <i class="ph ph-x"></i>
+                </button>
             </div>
         `;
     });
 
     if (cartTotal) cartTotal.textContent = totalPrecio.toFixed(2);
+}
+
+// =========================================================================
+// 6. FLUJO Y PEDIDO POR WHATSAPP
+// =========================================================================
+function enviarPedidoWhatsApp() {
+    if (carrito.length === 0) {
+        alert('Tu carrito está vacío. Agrega productos antes de enviar el pedido.');
+        return;
+    }
+
+    let mensaje = "¡Hola RCSmersh! Deseo realizar el siguiente pedido:\n\n";
+
+    carrito.forEach(item => {
+        let variaciones = [];
+        if (item.talla) variaciones.push(`Talla: ${item.talla}`);
+        if (item.color) variaciones.push(`Color: ${item.color}`);
+        const varStr = variaciones.length > 0 ? ` (${variaciones.join(', ')})` : '';
+
+        mensaje += `• ${item.cantidad}x ${item.nombre}${varStr} - S/ ${(item.precio * item.cantidad).toFixed(2)}\n`;
+    });
+
+    const total = carrito.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
+    mensaje += `\n*Total a Pagar:* S/ ${total.toFixed(2)}\n\n¿Me indican los pasos para realizar el pago?`;
+
+    const numeroWhatsApp = "51959562867";
+    const url = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensaje)}`;
+
+    window.open(url, '_blank');
 }
 
 function mostrarYProgramarCierreCarrito() {
@@ -268,14 +387,12 @@ function mostrarYProgramarCierreCarrito() {
 
     cartDropdown.classList.add('active');
 
-    if (temporizadorCarrito) {
-        clearTimeout(temporizadorCarrito);
-    }
+    if (temporizadorCarrito) clearTimeout(temporizadorCarrito);
 
     temporizadorCarrito = setTimeout(() => {
         cartDropdown.classList.remove('active');
         temporizadorCarrito = null;
-    }, 2000);
+    }, 2500);
 }
 
 function cerrarCarrito() {
@@ -307,7 +424,7 @@ function toggleCarrito() {
         if (carrito.length === 0) {
             temporizadorCarrito = setTimeout(() => {
                 cerrarCarrito();
-            }, 2000);
+            }, 2500);
         }
     }
 }
@@ -321,7 +438,7 @@ document.addEventListener('click', (event) => {
     if (cartDropdown.classList.contains('active')) {
         const esClicDentroDelCarrito = cartDropdown.contains(event.target);
         const esClicEnBotonHeader = cartBtn.contains(event.target);
-        const esClicEnBotonAccion = event.target.closest('.add-to-cart-btn, .qty-btn, .btn, .cart-item-remove');
+        const esClicEnBotonAccion = event.target.closest('.add-to-cart-btn, .cart-stepper, .btn, .cart-item-remove-subtle');
 
         if (!esClicDentroDelCarrito && !esClicEnBotonHeader && !esClicEnBotonAccion) {
             cerrarCarrito();
@@ -330,7 +447,7 @@ document.addEventListener('click', (event) => {
 });
 
 // =========================================================================
-// 6. NAVEGACIÓN MÓVIL Y CARRUSEL
+// 7. NAVEGACIÓN MÓVIL Y CARRUSEL HERO
 // =========================================================================
 function inicializarMenuMovil() {
     const navToggle = document.getElementById('navToggle');
