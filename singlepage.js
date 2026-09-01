@@ -6,56 +6,8 @@ let temporizadorCarrito = null;
 let listaProductosGlobal = [];
 let categoriaFiltroActual = 'TODOS';
 
-// Guarda las variaciones seleccionadas activas en cada tarjeta { prodId: { talla: 'M', color: 'Azul' } }
+// Guarda las variaciones seleccionadas activas { prodId: { talla: 'M', medida: '13 OZ', color: 'Azul' } }
 let variacionesSeleccionadas = {};
-
-// Catálogo base de respaldo consolidado por modelo de producto
-const productosBase = [
-    { 
-        id: '1', 
-        nombre: "Polo Manga Corta Premier", 
-        precioMin: 25.00, 
-        precioMax: 28.00, 
-        categoria: "TEXTIL", 
-        imagen: "assets/img_productos_opt/polo1.webp",
-        tallas: ['S', 'M', 'L', 'XL'],
-        colores: [{ nombre: 'Crema', hex: '#E2D7C5' }, { nombre: 'Azul', hex: '#2563EB' }, { nombre: 'Oscuro', hex: '#1E293B' }],
-        badge: 'Más Vendido'
-    },
-    { 
-        id: '2', 
-        nombre: "Polo Sublimado Full Color", 
-        precioMin: 28.00, 
-        precioMax: 28.00, 
-        categoria: "TEXTIL", 
-        imagen: "assets/img_productos_opt/polo2.webp",
-        tallas: ['S', 'M', 'L', 'XL'],
-        colores: [{ nombre: 'Azul', hex: '#2563EB' }, { nombre: 'Negro', hex: '#000000' }],
-        badge: 'Premium'
-    },
-    { 
-        id: '3', 
-        nombre: "Taza Personalizada Sublimada", 
-        precioMin: 25.00, 
-        precioMax: 25.00, 
-        categoria: "TAZA", 
-        imagen: "assets/img_productos_opt/taza1.webp",
-        tallas: [],
-        colores: [],
-        badge: ''
-    },
-    { 
-        id: '4', 
-        nombre: "Cuadro Sublimado Aluminio", 
-        precioMin: 28.00, 
-        precioMax: 28.00, 
-        categoria: "CUADRO", 
-        imagen: "assets/img_productos_opt/cuadro1.webp",
-        tallas: [],
-        colores: [],
-        badge: ''
-    }
-];
 
 // =========================================================================
 // 2. INICIALIZACIÓN
@@ -71,52 +23,61 @@ document.addEventListener('DOMContentLoaded', () => {
 // =========================================================================
 async function obtenerProductos() {
     try {
-        let productosProcesados = [];
+        if (!window.supabaseClient) return;
 
-        if (window.supabaseClient) {
-            const { data, error } = await window.supabaseClient
-                .from('productos')
-                .select('*')
-                .eq('activo', true)
-                .order('created_at', { ascending: false });
+        console.log("Iniciando consulta a Supabase...");
 
-            if (error) {
-                console.error('Error al consultar Supabase:', error.message);
-            } else if (data && data.length > 0) {
-                productosProcesados = data.map(item => {
-                    const catClean = (item.categoria || item.sub_categoria || '').toString().trim().toUpperCase();
-                    const esTextil = catClean.includes('POLO') || catClean.includes('TEXTIL');
+        const { data, error } = await window.supabaseClient
+            .from('productos')
+            .select('*, producto_variantes!producto_id(*)')
+            .eq('activo', true)
+            .order('created_at', { ascending: false });
 
-                    return {
-                        id: String(item.id),
-                        nombre: item.nombre_producto || item.nombre || 'Producto Personalizado',
-                        precioMin: parseFloat(item.precio_vta_unit || item.precio || 25.00),
-                        precioMax: parseFloat(item.precio_vta_unit || item.precio || 28.00),
-                        imagen: item.imagen_url || item.imagen || 'assets/img_productos_opt/polo1.webp',
-                        categoria: catClean.includes('TAZA') ? 'TAZA' : (catClean.includes('CUADRO') ? 'CUADRO' : 'TEXTIL'),
-                        tallas: esTextil ? ['S', 'M', 'L', 'XL'] : [],
-                        colores: esTextil ? [
-                            { nombre: 'Crema', hex: '#E2D7C5' }, 
-                            { nombre: 'Azul', hex: '#2563EB' }, 
-                            { nombre: 'Oscuro', hex: '#1E293B' }
-                        ] : [],
-                        badge: esTextil ? 'Destacado' : ''
-                    };
-                });
-            }
+        if (error) {
+            console.error('Error devuelto por Supabase:', error.message);
+            return;
         }
 
-        if (productosProcesados.length === 0) {
-            productosProcesados = productosBase;
+        if (!data || data.length === 0) {
+            console.warn('La consulta tuvo éxito pero la base de datos no devolvió registros.');
+            return;
         }
 
-        listaProductosGlobal = productosProcesados;
+        console.log("Productos obtenidos con éxito:", data);
+
+        listaProductosGlobal = data.map(item => {
+            const variantes = item.producto_variantes || [];
+
+            const tallas = [...new Set(variantes.map(v => v.talla).filter(Boolean))];
+            const colores = variantes
+                .filter(v => v.color_nombre)
+                .map(v => ({ nombre: v.color_nombre, hex: v.color_hex || '#000000' }))
+                .filter((col, index, self) => index === self.findIndex(t => t.nombre === col.nombre));
+
+            const medidas = [...new Set(variantes.map(v => v.medida || v.capacidad).filter(Boolean))];
+
+            const precios = variantes.map(v => parseFloat(v.precio || item.precio_base));
+            const precioMin = precios.length > 0 ? Math.min(...precios) : parseFloat(item.precio_base);
+            const precioMax = precios.length > 0 ? Math.max(...precios) : parseFloat(item.precio_base);
+
+            return {
+                id: String(item.id),
+                nombre: item.nombre,
+                precioMin: precioMin,
+                precioMax: precioMax,
+                imagen: item.imagen_url || 'assets/img_productos_opt/polo_mc.webp',
+                categoria: item.categoria ? item.categoria.toUpperCase().trim() : 'POLO',
+                tallas: tallas,
+                colores: colores,
+                medidas: medidas,
+                badge: item.sub_categoria || ''
+            };
+        });
+
         renderizarCatalogo();
 
     } catch (err) {
-        console.error('Error general al obtener productos:', err);
-        listaProductosGlobal = productosBase;
-        renderizarCatalogo();
+        console.error('Error de ejecución:', err);
     }
 }
 
@@ -124,12 +85,21 @@ async function obtenerProductos() {
 // 4. RENDERIZADO Y FILTRADO DEL CATÁLOGO (UI/UX)
 // =========================================================================
 function filtrarCategoria(categoria, btnElement) {
-    categoriaFiltroActual = categoria;
+    categoriaFiltroActual = categoria.toUpperCase().trim();
 
-    // Actualizar clase activa de los botones pill
     if (btnElement) {
         document.querySelectorAll('.filter-pill').forEach(pill => pill.classList.remove('active'));
         btnElement.classList.add('active');
+    } else {
+        // Si viene del menú o footer, sincronizar botón activo de los pills
+        document.querySelectorAll('.filter-pill').forEach(pill => {
+            const onclickAttr = pill.getAttribute('onclick') || '';
+            if (onclickAttr.includes(`'${categoriaFiltroActual}'`)) {
+                pill.classList.add('active');
+            } else {
+                pill.classList.remove('active');
+            }
+        });
     }
 
     renderizarCatalogo();
@@ -143,31 +113,34 @@ function renderizarCatalogo() {
 
     const productosFiltrados = listaProductosGlobal.filter(p => {
         if (categoriaFiltroActual === 'TODOS') return true;
+        // Permite equivalencia entre TEXTIL y POLO
+        if (categoriaFiltroActual === 'TEXTIL' || categoriaFiltroActual === 'POLO') {
+            return p.categoria === 'POLO' || p.categoria === 'TEXTIL';
+        }
         return p.categoria === categoriaFiltroActual;
     });
 
     if (productosFiltrados.length === 0) {
-        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #64748b;">No hay productos disponibles en esta categoría.</p>';
+        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 2rem 0;">No hay productos disponibles en esta categoría.</p>';
         return;
     }
 
     productosFiltrados.forEach(prod => {
-        // Inicializar variaciones por defecto para cada producto
         if (!variacionesSeleccionadas[prod.id]) {
             variacionesSeleccionadas[prod.id] = {
                 talla: prod.tallas.length > 0 ? prod.tallas[0] : null,
+                medida: prod.medidas.length > 0 ? prod.medidas[0] : null,
                 color: prod.colores.length > 0 ? prod.colores[0].nombre : null
             };
         }
 
         const sel = variacionesSeleccionadas[prod.id];
 
-        // Texto de Rango de Precios
         const precioTexto = prod.precioMin === prod.precioMax 
             ? `S/ ${prod.precioMin.toFixed(2)}` 
             : `S/ ${prod.precioMin.toFixed(2)} - S/ ${prod.precioMax.toFixed(2)}`;
 
-        // HTML Bloque de Tallas
+        // Selector de Talla
         let htmlTallas = '';
         if (prod.tallas.length > 0) {
             htmlTallas = `
@@ -183,7 +156,25 @@ function renderizarCatalogo() {
             `;
         }
 
-        // HTML Bloque de Colores
+        // Selector de Medida / Capacidad
+        let htmlMedidas = '';
+        if (prod.medidas.length > 0) {
+            const etiquetaMedida = prod.categoria === 'TAZA' ? 'Capacidad' : 'Medida';
+            htmlMedidas = `
+                <div class="variant-block">
+                    <div class="variant-label">${etiquetaMedida}:</div>
+                    <div class="size-selector">
+                        ${prod.medidas.map(m => `
+                            <button class="size-pill ${sel.medida === m ? 'active' : ''}" 
+                                style="padding: 0 0.5rem;"
+                                onclick="seleccionarVariacion('${prod.id}', 'medida', '${m}')">${m}</button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Selector de Color
         let htmlColores = '';
         if (prod.colores.length > 0) {
             htmlColores = `
@@ -213,6 +204,7 @@ function renderizarCatalogo() {
                         <div class="product-unit-text">Precio unit: ${precioTexto}</div>
                         <div class="product-price-range">${precioTexto}</div>
                         ${htmlTallas}
+                        ${htmlMedidas}
                         ${htmlColores}
                     </div>
                     <button class="btn btn-primary btn-block add-to-cart-btn" onclick="agregarAlCarrito('${prod.id}')">
@@ -245,11 +237,10 @@ function agregarAlCarrito(idProducto) {
 
     const seleccion = variacionesSeleccionadas[idStr] || {};
     const tallaElegida = seleccion.talla || '';
+    const medidaElegida = seleccion.medida || '';
     const colorElegido = seleccion.color || '';
 
-    // Generar identificador único combinando ID + Talla + Color
-    const itemKey = `${idStr}_${tallaElegida}_${colorElegido}`;
-
+    const itemKey = `${idStr}_${tallaElegida}_${medidaElegida}_${colorElegido}`;
     const itemExistente = carrito.find(item => item.key === itemKey);
 
     if (itemExistente) {
@@ -262,6 +253,7 @@ function agregarAlCarrito(idProducto) {
             precio: producto.precioMin,
             imagen: producto.imagen,
             talla: tallaElegida,
+            medida: medidaElegida,
             color: colorElegido,
             cantidad: 1
         });
@@ -321,11 +313,11 @@ function actualizarCarritoUI() {
         const subtotal = item.precio * item.cantidad;
         totalPrecio += subtotal;
 
-        // Construir detalles de variación (ej. Talla: M | Color: Azul)
         let metaDetalles = [];
         if (item.talla) metaDetalles.push(`Talla: ${item.talla}`);
+        if (item.medida) metaDetalles.push(`Medida: ${item.medida}`);
         if (item.color) metaDetalles.push(`Color: ${item.color}`);
-        const metaTexto = metaDetalles.length > 0 ? metaDetalles.join(' | ') : 'Personalizado';
+        const metaTexto = metaDetalles.length > 0 ? metaDetalles.join(' | ') : 'Estándar';
 
         cartItemsContainer.innerHTML += `
             <div class="cart-item">
@@ -366,6 +358,7 @@ function enviarPedidoWhatsApp() {
     carrito.forEach(item => {
         let variaciones = [];
         if (item.talla) variaciones.push(`Talla: ${item.talla}`);
+        if (item.medida) variaciones.push(`Medida: ${item.medida}`);
         if (item.color) variaciones.push(`Color: ${item.color}`);
         const varStr = variaciones.length > 0 ? ` (${variaciones.join(', ')})` : '';
 
