@@ -49,10 +49,27 @@ async function obtenerProductos() {
             const variantes = item.producto_variantes || [];
 
             const tallas = [...new Set(variantes.map(v => v.talla).filter(Boolean))];
+            
+            // Mapeo de colores incluyendo la imagen_url de cada variante
             const colores = variantes
                 .filter(v => v.color_nombre)
-                .map(v => ({ nombre: v.color_nombre, hex: v.color_hex || '#000000' }))
-                .filter((col, index, self) => index === self.findIndex(t => t.nombre === col.nombre));
+                .map(v => ({ 
+                    nombre: v.color_nombre, 
+                    hex: v.color_hex || '#000000',
+                    imagen: v.imagen_url || null // Captura la imagen del Storage asociada al color
+                }))
+                .reduce((acc, current) => {
+                    const existente = acc.find(item => item.nombre === current.nombre);
+                    if (!existente) {
+                        return acc.concat([current]);
+                    } else {
+                        // Si ya existe el color pero la entrada anterior no tenía imagen y la actual sí, se actualiza
+                        if (!existente.imagen && current.imagen) {
+                            existente.imagen = current.imagen;
+                        }
+                        return acc;
+                    }
+                }, []);
 
             const medidas = [...new Set(variantes.map(v => v.medida || v.capacidad).filter(Boolean))];
 
@@ -91,7 +108,6 @@ function filtrarCategoria(categoria, btnElement) {
         document.querySelectorAll('.filter-pill').forEach(pill => pill.classList.remove('active'));
         btnElement.classList.add('active');
     } else {
-        // Si viene del menú o footer, sincronizar botón activo de los pills
         document.querySelectorAll('.filter-pill').forEach(pill => {
             const onclickAttr = pill.getAttribute('onclick') || '';
             if (onclickAttr.includes(`'${categoriaFiltroActual}'`)) {
@@ -113,7 +129,6 @@ function renderizarCatalogo() {
 
     const productosFiltrados = listaProductosGlobal.filter(p => {
         if (categoriaFiltroActual === 'TODOS') return true;
-        // Permite equivalencia entre TEXTIL y POLO
         if (categoriaFiltroActual === 'TEXTIL' || categoriaFiltroActual === 'POLO') {
             return p.categoria === 'POLO' || p.categoria === 'TEXTIL';
         }
@@ -135,6 +150,10 @@ function renderizarCatalogo() {
         }
 
         const sel = variacionesSeleccionadas[prod.id];
+
+        // LÓGICA DE IMAGEN DINÁMICA: Evalúa la foto del color seleccionado o la general del producto
+        const colorObjeto = prod.colores.find(c => c.nombre === sel.color);
+        const imagenAMostrar = (colorObjeto && colorObjeto.imagen) ? colorObjeto.imagen : prod.imagen;
 
         const precioTexto = prod.precioMin === prod.precioMax 
             ? `S/ ${prod.precioMin.toFixed(2)}` 
@@ -196,7 +215,7 @@ function renderizarCatalogo() {
             <div class="product-card">
                 ${prod.badge ? `<span class="product-badge">${prod.badge}</span>` : ''}
                 <div class="product-img-wrapper">
-                    <img src="${prod.imagen}" alt="${prod.nombre}" loading="lazy">
+                    <img src="${imagenAMostrar}" alt="${prod.nombre}" loading="lazy">
                 </div>
                 <div class="product-info">
                     <div>
@@ -240,6 +259,10 @@ function agregarAlCarrito(idProducto) {
     const medidaElegida = seleccion.medida || '';
     const colorElegido = seleccion.color || '';
 
+    // Asigna la foto elegida de la variante al carrito
+    const colorObjeto = producto.colores.find(c => c.nombre === colorElegido);
+    const imagenItem = (colorObjeto && colorObjeto.imagen) ? colorObjeto.imagen : producto.imagen;
+
     const itemKey = `${idStr}_${tallaElegida}_${medidaElegida}_${colorElegido}`;
     const itemExistente = carrito.find(item => item.key === itemKey);
 
@@ -251,7 +274,7 @@ function agregarAlCarrito(idProducto) {
             id: producto.id,
             nombre: producto.nombre,
             precio: producto.precioMin,
-            imagen: producto.imagen,
+            imagen: imagenItem,
             talla: tallaElegida,
             medida: medidaElegida,
             color: colorElegido,
