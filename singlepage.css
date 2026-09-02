@@ -314,11 +314,16 @@ body {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
-    transition: var(--transition);
+    transition: opacity 0.25s ease-in-out;
+    opacity: 1;
 }
 
 .product-card:hover img {
     transform: scale(1.04);
+}
+
+.product-img-wrapper img.changing {
+    opacity: 0.15;
 }
 
 .product-info {
@@ -399,15 +404,22 @@ body {
 .color-swatch {
     width: 26px;
     height: 26px;
-    border-radius: 50%;
-    border: 2px solid var(--white);
-    outline: 1px solid var(--border);
+    border-radius: 6px; /* Forma cuadrada con bordes suaves */
+    border: 2px solid transparent;
     cursor: pointer;
-    transition: var(--transition);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+    padding: 0;
+    outline: none;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
 }
 
-.color-swatch:hover, .color-swatch.active {
+.color-swatch:hover {
     outline: 2px solid var(--primary);
+    transform: scale(1.1);
+}
+
+.color-swatch.active {
+    border-color: #0284c7;
     transform: scale(1.1);
 }
 
@@ -680,4 +692,28 @@ body {
     .product-price-range { font-size: 1rem; margin-bottom: 0.4rem; }
     .size-pill { min-width: 28px; height: 28px; font-size: 0.75rem; }
     .color-swatch { width: 22px; height: 22px; }
+}
+
+/* Botón compacto para expandir/contraer colores */
+.color-swatch-toggle {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px; /* Mantiene la estética cuadrada */
+    border: 1px dashed #94a3b8;
+    background-color: #f8fafc;
+    color: #475569;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.color-swatch-toggle:hover {
+    border-color: #0284c7;
+    color: #0284c7;
+    background-color: #f0f9ff;
 }
