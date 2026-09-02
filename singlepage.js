@@ -5,9 +5,10 @@ let carrito = [];
 let temporizadorCarrito = null; 
 let listaProductosGlobal = [];
 let categoriaFiltroActual = 'TODOS';
-
-// Guarda las variaciones seleccionadas activas { prodId: { talla: 'M', medida: '13 OZ', color: 'Azul' } }
 let variacionesSeleccionadas = {};
+
+let coloresExpandidos = {}; 
+let observerTarjetas = null;
 
 // =========================================================================
 // 2. INICIALIZACIÓN
@@ -18,52 +19,66 @@ document.addEventListener('DOMContentLoaded', () => {
     obtenerProductos();
 });
 
+// Obtención segura de la instancia de Supabase
+function getSupabaseClient() {
+    if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient) {
+        return window.supabaseClient;
+    }
+    if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+        return supabaseClient;
+    }
+    return null;
+}
+
 // =========================================================================
 // 3. CONSULTA A SUPABASE Y PROCESAMIENTO CONSOLIDADO
 // =========================================================================
 async function obtenerProductos() {
+    const client = getSupabaseClient();
+    const grid = document.getElementById('gridProductos');
+
+    if (!client) {
+        console.error('No se encontró la instancia del cliente de Supabase.');
+        if (grid) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #ef4444; padding: 2rem 0;">Error de conexión con la base de datos.</p>';
+        return;
+    }
+
     try {
-        if (!window.supabaseClient) return;
-
-        console.log("Iniciando consulta a Supabase...");
-
-        const { data, error } = await window.supabaseClient
+        // Sintaxis de relación estandard para Supabase v2
+        const { data, error } = await client
             .from('productos')
-            .select('*, producto_variantes!producto_id(*)')
+            .select('*, producto_variantes(*)')
             .eq('activo', true)
             .order('created_at', { ascending: false });
 
         if (error) {
             console.error('Error devuelto por Supabase:', error.message);
+            if (grid) grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #ef4444; padding: 2rem 0;">Error al cargar productos: ${error.message}</p>`;
             return;
         }
 
         if (!data || data.length === 0) {
-            console.warn('La consulta tuvo éxito pero la base de datos no devolvió registros.');
+            console.warn('La consulta tuvo éxito pero no devolvió registros.');
+            if (grid) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 2rem 0;">No hay productos disponibles por el momento.</p>';
             return;
         }
 
-        console.log("Productos obtenidos con éxito:", data);
-
         listaProductosGlobal = data.map(item => {
             const variantes = item.producto_variantes || [];
-
             const tallas = [...new Set(variantes.map(v => v.talla).filter(Boolean))];
             
-            // Mapeo de colores incluyendo la imagen_url de cada variante
             const colores = variantes
                 .filter(v => v.color_nombre)
                 .map(v => ({ 
                     nombre: v.color_nombre, 
                     hex: v.color_hex || '#000000',
-                    imagen: v.imagen_url || null // Captura la imagen del Storage asociada al color
+                    imagen: v.imagen_url || null
                 }))
                 .reduce((acc, current) => {
                     const existente = acc.find(item => item.nombre === current.nombre);
                     if (!existente) {
                         return acc.concat([current]);
                     } else {
-                        // Si ya existe el color pero la entrada anterior no tenía imagen y la actual sí, se actualiza
                         if (!existente.imagen && current.imagen) {
                             existente.imagen = current.imagen;
                         }
@@ -71,11 +86,21 @@ async function obtenerProductos() {
                     }
                 }, []);
 
-            const medidas = [...new Set(variantes.map(v => v.medida || v.capacidad).filter(Boolean))];
+            const ordenPreferido = ['blanco', 'negro', 'celeste', 'verde', 'anaranjado'];
+            colores.sort((a, b) => {
+                const indexA = ordenPreferido.indexOf(a.nombre.toLowerCase().trim());
+                const indexB = ordenPreferido.indexOf(b.nombre.toLowerCase().trim());
+                
+                if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+                if (indexA !== -1) return -1;
+                if (indexB !== -1) return 1;
+                return a.nombre.localeCompare(b.nombre);
+            });
 
+            const medidas = [...new Set(variantes.map(v => v.medida || v.capacidad).filter(Boolean))];
             const precios = variantes.map(v => parseFloat(v.precio || item.precio_base));
-            const precioMin = precios.length > 0 ? Math.min(...precios) : parseFloat(item.precio_base);
-            const precioMax = precios.length > 0 ? Math.max(...precios) : parseFloat(item.precio_base);
+            const precioMin = precios.length > 0 ? Math.min(...precios) : parseFloat(item.precio_base || 0);
+            const precioMax = precios.length > 0 ? Math.max(...precios) : parseFloat(item.precio_base || 0);
 
             return {
                 id: String(item.id),
@@ -95,6 +120,7 @@ async function obtenerProductos() {
 
     } catch (err) {
         console.error('Error de ejecución:', err);
+        if (grid) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #ef4444; padding: 2rem 0;">Ocurrió un error inesperado al procesar los productos.</p>';
     }
 }
 
@@ -129,16 +155,22 @@ function renderizarCatalogo() {
 
     const productosFiltrados = listaProductosGlobal.filter(p => {
         if (categoriaFiltroActual === 'TODOS') return true;
-        if (categoriaFiltroActual === 'TEXTIL' || categoriaFiltroActual === 'POLO') {
-            return p.categoria === 'POLO' || p.categoria === 'TEXTIL';
+        
+        const catProd = p.categoria;
+        const catFiltro = categoriaFiltroActual;
+
+        if (catFiltro === 'POLO' || catFiltro === 'TEXTIL') {
+            return catProd.includes('POLO') || catProd.includes('TEXTIL');
         }
-        return p.categoria === categoriaFiltroActual;
+        return catProd.includes(catFiltro) || catFiltro.includes(catProd);
     });
 
     if (productosFiltrados.length === 0) {
         grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 2rem 0;">No hay productos disponibles en esta categoría.</p>';
         return;
     }
+
+    let htmlGrid = '';
 
     productosFiltrados.forEach(prod => {
         if (!variacionesSeleccionadas[prod.id]) {
@@ -150,8 +182,6 @@ function renderizarCatalogo() {
         }
 
         const sel = variacionesSeleccionadas[prod.id];
-
-        // LÓGICA DE IMAGEN DINÁMICA: Evalúa la foto del color seleccionado o la general del producto
         const colorObjeto = prod.colores.find(c => c.nombre === sel.color);
         const imagenAMostrar = (colorObjeto && colorObjeto.imagen) ? colorObjeto.imagen : prod.imagen;
 
@@ -159,7 +189,6 @@ function renderizarCatalogo() {
             ? `S/ ${prod.precioMin.toFixed(2)}` 
             : `S/ ${prod.precioMin.toFixed(2)} - S/ ${prod.precioMax.toFixed(2)}`;
 
-        // Selector de Talla
         let htmlTallas = '';
         if (prod.tallas.length > 0) {
             htmlTallas = `
@@ -175,10 +204,9 @@ function renderizarCatalogo() {
             `;
         }
 
-        // Selector de Medida / Capacidad
         let htmlMedidas = '';
         if (prod.medidas.length > 0) {
-            const etiquetaMedida = prod.categoria === 'TAZA' ? 'Capacidad' : 'Medida';
+            const etiquetaMedida = prod.categoria.includes('TAZA') ? 'Capacidad' : 'Medida';
             htmlMedidas = `
                 <div class="variant-block">
                     <div class="variant-label">${etiquetaMedida}:</div>
@@ -193,26 +221,13 @@ function renderizarCatalogo() {
             `;
         }
 
-        // Selector de Color
         let htmlColores = '';
         if (prod.colores.length > 0) {
-            htmlColores = `
-                <div class="variant-block">
-                    <div class="variant-label">Color:</div>
-                    <div class="color-selector">
-                        ${prod.colores.map(c => `
-                            <button class="color-swatch ${sel.color === c.nombre ? 'active' : ''}" 
-                                style="background-color: ${c.hex};" 
-                                title="${c.nombre}"
-                                onclick="seleccionarVariacion('${prod.id}', 'color', '${c.nombre}')"></button>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
+            htmlColores = generarHTMLColores(prod.id);
         }
 
-        const cardHTML = `
-            <div class="product-card">
+        htmlGrid += `
+            <div class="product-card" data-id="${prod.id}">
                 ${prod.badge ? `<span class="product-badge">${prod.badge}</span>` : ''}
                 <div class="product-img-wrapper">
                     <img src="${imagenAMostrar}" alt="${prod.nombre}" loading="lazy">
@@ -224,7 +239,9 @@ function renderizarCatalogo() {
                         <div class="product-price-range">${precioTexto}</div>
                         ${htmlTallas}
                         ${htmlMedidas}
-                        ${htmlColores}
+                        <div class="container-colores-${prod.id}">
+                            ${htmlColores}
+                        </div>
                     </div>
                     <button class="btn btn-primary btn-block add-to-cart-btn" onclick="agregarAlCarrito('${prod.id}')">
                         Agregar al Carrito
@@ -232,17 +249,135 @@ function renderizarCatalogo() {
                 </div>
             </div>
         `;
-
-        grid.innerHTML += cardHTML;
     });
+
+    grid.innerHTML = htmlGrid;
+    //inicializarObserverTarjetas();
+    inicializarEventosTarjetas();
+}
+
+function generarHTMLColores(idProducto) {
+    const prod = listaProductosGlobal.find(p => String(p.id) === String(idProducto));
+    if (!prod || !prod.colores.length) return '';
+
+    const sel = variacionesSeleccionadas[prod.id] || {};
+    const LIMITE = 5;
+    const estaExpandido = coloresExpandidos[prod.id] || false;
+    const tieneMasColores = prod.colores.length > LIMITE;
+
+    const coloresAMostrar = (tieneMasColores && !estaExpandido) 
+        ? prod.colores.slice(0, LIMITE) 
+        : prod.colores;
+
+    const botonToggle = tieneMasColores ? `
+        <button class="color-swatch-toggle" 
+            onclick="toggleMostrarColores('${prod.id}')" 
+            title="${estaExpandido ? 'Ocultar colores' : 'Ver todos los colores'}">
+            ${estaExpandido ? '<i class="ph ph-caret-left"></i>' : `+${prod.colores.length - LIMITE}`}
+        </button>
+    ` : '';
+
+    return `
+        <div class="variant-block">
+            <div class="variant-label">Color:</div>
+            <div class="color-selector">
+                ${coloresAMostrar.map(c => `
+                    <button class="color-swatch ${sel.color === c.nombre ? 'active' : ''}" 
+                        style="background-color: ${c.hex};" 
+                        title="${c.nombre}"
+                        onclick="seleccionarVariacion('${prod.id}', 'color', '${c.nombre}')"></button>
+                `).join('')}
+                ${botonToggle}
+            </div>
+        </div>
+    `;
 }
 
 function seleccionarVariacion(idProducto, tipo, valor) {
-    if (!variacionesSeleccionadas[idProducto]) {
-        variacionesSeleccionadas[idProducto] = {};
+    const idStr = String(idProducto);
+    if (!variacionesSeleccionadas[idStr]) {
+        variacionesSeleccionadas[idStr] = {};
     }
-    variacionesSeleccionadas[idProducto][tipo] = valor;
-    renderizarCatalogo();
+    variacionesSeleccionadas[idStr][tipo] = valor;
+
+    const card = document.querySelector(`.product-card[data-id="${idStr}"]`);
+    if (!card) return;
+
+    if (tipo === 'color') {
+        const colorButtons = card.querySelectorAll('.color-swatch');
+        colorButtons.forEach(btn => {
+            if (btn.getAttribute('title') === valor) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        const imgEl = card.querySelector('.product-img-wrapper img');
+        const prod = listaProductosGlobal.find(p => String(p.id) === idStr);
+
+        if (imgEl && prod) {
+            const colorObjeto = prod.colores.find(c => c.nombre === valor);
+            const nuevaImagen = (colorObjeto && colorObjeto.imagen) ? colorObjeto.imagen : prod.imagen;
+
+            if (imgEl.src !== nuevaImagen) {
+                imgEl.classList.add('changing');
+
+                const imgTemp = new Image();
+                imgTemp.src = nuevaImagen;
+                
+                const aplicarCambio = () => {
+                    imgEl.src = nuevaImagen;
+                    imgEl.classList.remove('changing');
+                };
+
+                imgTemp.onload = aplicarCambio;
+                imgTemp.onerror = aplicarCambio;
+            }
+        }
+    } else {
+        const selectorPills = card.querySelectorAll(`.size-pill`);
+        selectorPills.forEach(pill => {
+            if (pill.textContent.trim() === valor) {
+                pill.classList.add('active');
+            } else {
+                pill.classList.remove('active');
+            }
+        });
+    }
+}
+
+function toggleMostrarColores(idProducto) {
+    const idStr = String(idProducto);
+    coloresExpandidos[idStr] = !coloresExpandidos[idStr];
+    actualizarUIColoresTarget(idStr);
+}
+
+function inicializarObserverTarjetas() {
+    if (observerTarjetas) observerTarjetas.disconnect();
+
+    observerTarjetas = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (!entry.isIntersecting) {
+                const idProducto = entry.target.getAttribute('data-id');
+                if (idProducto && coloresExpandidos[idProducto]) {
+                    coloresExpandidos[idProducto] = false;
+                    actualizarUIColoresTarget(idProducto);
+                }
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.product-card').forEach(card => {
+        observerTarjetas.observe(card);
+    });
+}
+
+function actualizarUIColoresTarget(idProducto) {
+    const contenedorColores = document.querySelector(`.container-colores-${idProducto}`);
+    if (contenedorColores) {
+        contenedorColores.innerHTML = generarHTMLColores(idProducto);
+    }
 }
 
 // =========================================================================
@@ -259,7 +394,6 @@ function agregarAlCarrito(idProducto) {
     const medidaElegida = seleccion.medida || '';
     const colorElegido = seleccion.color || '';
 
-    // Asigna la foto elegida de la variante al carrito
     const colorObjeto = producto.colores.find(c => c.nombre === colorElegido);
     const imagenItem = (colorObjeto && colorObjeto.imagen) ? colorObjeto.imagen : producto.imagen;
 
@@ -509,4 +643,23 @@ function inicializarCarrusel() {
     if (prevBtn) prevBtn.addEventListener('click', () => showSlide(currentSlide - 1));
 
     setInterval(() => showSlide(currentSlide + 1), 5000);
+}
+
+// =========================================================================
+// GESTIÓN DE EVENTOS Y SALIDA DEL MOUSE DE LA TARJETA
+// =========================================================================
+function inicializarEventosTarjetas() {
+    // 1. Observer para cuando la tarjeta sale de la pantalla
+    inicializarObserverTarjetas();
+
+    // 2. Evento para cuando el mouse sale de la tarjeta
+    document.querySelectorAll('.product-card').forEach(card => {
+        card.addEventListener('mouseleave', () => {
+            const idProducto = card.getAttribute('data-id');
+            if (idProducto && coloresExpandidos[idProducto]) {
+                coloresExpandidos[idProducto] = false;
+                actualizarUIColoresTarget(idProducto);
+            }
+        });
+    });
 }
