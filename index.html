@@ -16,7 +16,7 @@
 <body>
 
     <!-- =========================================================================
-         1. CABECERA & BARRA DE NAVEGACIÓN (HEADER & NAV)
+         1. CABECERA & BARRA DE NAVEGACIÓN
          ========================================================================= -->
     <header class="header">
         <div class="container nav-container">
@@ -51,7 +51,7 @@
     </header>
 
     <!-- =========================================================================
-         2. PANEL LATERAL DESPLEGABLE DEL CARRITO (DRAWER)
+         2. PANEL LATERAL DEL CARRITO (DRAWER)
          ========================================================================= -->
     <aside class="cart-dropdown" id="cartDropdown">
         <div class="cart-header">
@@ -81,7 +81,7 @@
          ========================================================================= -->
     <main>
 
-        <!-- SECCIÓN INICIO / HERO -->
+        <!-- SECCIÓN HERO / CARRUSEL -->
         <section id="inicio" class="section hero-section">
             <div class="carousel" id="carousel">
                 <div class="carousel-slide active">
@@ -126,12 +126,11 @@
             </div>
         </section>
 
-        <!-- SECCIÓN TIENDA / CATÁLOGO OPTIMIZADO -->
+        <!-- SECCIÓN TIENDA / CATÁLOGO -->
         <section id="tienda" class="section container">
             <h2 class="section-title">Nuestros Productos</h2>
             <p class="section-subtitle">Explora nuestras colecciones exclusivas y personaliza tu pedido.</p>
 
-            <!-- BARRA DE FILTROS POR CATEGORÍA (PILLS) -->
             <div class="category-filters">
                 <button class="filter-pill active" onclick="filtrarCategoria('TODOS', this)">Todos</button>
                 <button class="filter-pill" onclick="filtrarCategoria('POLO', this)">Polos</button>
@@ -139,11 +138,10 @@
                 <button class="filter-pill" onclick="filtrarCategoria('CUADRO', this)">Cuadros</button>
             </div>
 
-            <!-- GRID PRINCIPAL UNIFICADO -->
             <div class="products-grid" id="gridProductos"></div>
         </section>
 
-        <!-- SECCIÓN CONTACTO Y COTIZACIÓN -->
+        <!-- SECCIÓN CONTACTO -->
         <section id="contacto" class="section bg-light">
             <div class="container form-container">
                 <h2 class="section-title">Ponte en Contacto</h2>
@@ -201,11 +199,10 @@
         </div>
     </footer>
 
-    <!-- SDK Supabase y Lógica JS -->
+    <!-- Scripts Supabase y Lógica JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
     <script src="singlepage.js"></script>
 
 </body>
-
 </html>

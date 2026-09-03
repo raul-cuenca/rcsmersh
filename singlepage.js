@@ -1,11 +1,14 @@
 // =========================================================================
-// 1. ESTADO GLOBAL DE LA APLICACIÓN
+// 1. ESTADO GLOBAL
 // =========================================================================
 let carrito = [];
 let temporizadorCarrito = null; 
 let listaProductosGlobal = [];
 let categoriaFiltroActual = 'TODOS';
 let variacionesSeleccionadas = {};
+
+// Orden estándar para ordenar visualmente las tallas en los modales
+const ORDEN_TALLAS_ESTANDAR = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL'];
 
 // =========================================================================
 // 2. INICIALIZACIÓN
@@ -27,7 +30,7 @@ function getSupabaseClient() {
 }
 
 // =========================================================================
-// 3. CONSULTA A SUPABASE Y PROCESAMIENTO
+// 3. CONSULTA Y PROCESAMIENTO DE PRODUCTOS Y VARIANTES
 // =========================================================================
 async function obtenerProductos() {
     const client = getSupabaseClient();
@@ -59,31 +62,47 @@ async function obtenerProductos() {
 
         listaProductosGlobal = data.map(item => {
             const variantes = item.producto_variantes || [];
-            const tallas = [...new Set(variantes.map(v => v.talla).filter(Boolean))];
             
-            const colores = variantes
-                .filter(v => v.color_nombre)
-                .map(v => ({ 
-                    nombre: v.color_nombre, 
-                    hex: v.color_hex || '#000000',
-                    imagen: v.imagen_url || null
-                }))
-                .reduce((acc, current) => {
-                    const existente = acc.find(item => item.nombre === current.nombre);
-                    if (!existente) {
-                        return acc.concat([current]);
-                    } else {
-                        if (!existente.imagen && current.imagen) {
-                            existente.imagen = current.imagen;
-                        }
-                        return acc;
-                    }
-                }, []);
+            // Extracto y ordenamiento de TODAS las tallas sin omitir ninguna
+            const tallas = [...new Set(
+                variantes
+                    .map(v => v.talla ? v.talla.toString().trim().toUpperCase() : null)
+                    .filter(Boolean)
+            )].sort((a, b) => {
+                const idxA = ORDEN_TALLAS_ESTANDAR.indexOf(a);
+                const idxB = ORDEN_TALLAS_ESTANDAR.indexOf(b);
+                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                if (idxA !== -1) return -1;
+                if (idxB !== -1) return 1;
+                return a.localeCompare(b);
+            });
 
-            const ordenPreferido = ['blanco', 'negro', 'celeste', 'verde', 'anaranjado'];
+            // Agrupación y extracción de TODOS los colores sin duplicar
+            const coloresMap = new Map();
+            variantes.forEach(v => {
+                if (!v.color_nombre) return;
+                const nombreLimpio = v.color_nombre.trim();
+                const key = nombreLimpio.toLowerCase();
+                
+                if (!coloresMap.has(key)) {
+                    coloresMap.set(key, {
+                        nombre: nombreLimpio,
+                        hex: v.color_hex || '#000000',
+                        imagen: v.imagen_url || null
+                    });
+                } else {
+                    const colExistente = coloresMap.get(key);
+                    if (!colExistente.imagen && v.imagen_url) {
+                        colExistente.imagen = v.imagen_url;
+                    }
+                }
+            });
+            const colores = Array.from(coloresMap.values());
+
+            const ordenPreferido = ['blanco', 'negro', 'celeste', 'verde', 'anaranjado', 'rojo', 'azul'];
             colores.sort((a, b) => {
-                const indexA = ordenPreferido.indexOf(a.nombre.toLowerCase().trim());
-                const indexB = ordenPreferido.indexOf(b.nombre.toLowerCase().trim());
+                const indexA = ordenPreferido.indexOf(a.nombre.toLowerCase());
+                const indexB = ordenPreferido.indexOf(b.nombre.toLowerCase());
                 
                 if (indexA !== -1 && indexB !== -1) return indexA - indexB;
                 if (indexA !== -1) return -1;
@@ -166,7 +185,7 @@ function renderizarCatalogo() {
     let htmlGrid = '';
 
     productosFiltrados.forEach(prod => {
-        const tieneVariantesColor = prod.colores && prod.colores.length > 1;
+        const tieneVariantesColor = prod.colores && prod.colores.length > 0;
 
         if (!variacionesSeleccionadas[prod.id]) {
             variacionesSeleccionadas[prod.id] = {
@@ -177,7 +196,7 @@ function renderizarCatalogo() {
         }
 
         const sel = variacionesSeleccionadas[prod.id];
-        const colorObjeto = prod.colores.find(c => c.nombre === sel.color);
+        const colorObjeto = prod.colores.find(c => c.nombre.toLowerCase() === (sel.color || '').toLowerCase());
         const imagenAMostrar = (colorObjeto && colorObjeto.imagen) ? colorObjeto.imagen : prod.imagen;
 
         const precioTexto = prod.precioMin === prod.precioMax 
@@ -197,6 +216,8 @@ function renderizarCatalogo() {
                     ${prod.colores.length > 3 ? `<span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">+${prod.colores.length - 3}</span>` : ''}
                 </div>
             `;
+        } else {
+            html3Colores = `<div class="mini-color-container"></div>`;
         }
 
         htmlGrid += `
@@ -227,7 +248,7 @@ function seleccionarVariacion(idProducto, tipo, valor) {
 }
 
 // =========================================================================
-// 5. MODAL DE PRODUCTO (RESPONSIVE / MOBILE APP STYLE)
+// 5. MODAL DE PRODUCTO (MUESTRA TODAS LAS TALLAS Y COLORES)
 // =========================================================================
 function abrirModalProducto(idProducto) {
     const idStr = String(idProducto);
@@ -242,16 +263,26 @@ function abrirModalProducto(idProducto) {
         document.body.appendChild(modalOverlay);
     }
 
-    const sel = variacionesSeleccionadas[idStr] || {
-        talla: prod.tallas[0] || null,
-        medida: prod.medidas[0] || null,
-        color: prod.colores[0]?.nombre || null
-    };
+    // Si es un polo y no tiene tallas desde la BD, se asignan S, M, L, XL por defecto
+    const esPolo = prod.categoria ? prod.categoria.includes('POLO') : true;
+    const listaTallas = (prod.tallas && prod.tallas.length > 0) ? prod.tallas : (esPolo ? ['S', 'M', 'L', 'XL'] : []);
 
-    const colorObjeto = prod.colores.find(c => c.nombre === sel.color);
+    // Inicializar selección predeterminada
+    if (!variacionesSeleccionadas[idStr]) {
+        variacionesSeleccionadas[idStr] = {};
+    }
+    if (!variacionesSeleccionadas[idStr].talla && listaTallas.length > 0) {
+        variacionesSeleccionadas[idStr].talla = listaTallas[0];
+    }
+    if (!variacionesSeleccionadas[idStr].color && prod.colores.length > 0) {
+        variacionesSeleccionadas[idStr].color = prod.colores[0].nombre;
+    }
+
+    const sel = variacionesSeleccionadas[idStr];
+    const colorObjeto = prod.colores.find(c => c.nombre.toLowerCase() === (sel.color || '').toLowerCase());
     const imagenAMostrar = (colorObjeto && colorObjeto.imagen) ? colorObjeto.imagen : prod.imagen;
     
-    const precioRango = prod.precioMin === prod.precioMax 
+    const precioTexto = prod.precioMin === prod.precioMax 
         ? `S/ ${prod.precioMin.toFixed(2)}` 
         : `S/ ${prod.precioMin.toFixed(2)} - S/ ${prod.precioMax.toFixed(2)}`;
 
@@ -264,37 +295,31 @@ function abrirModalProducto(idProducto) {
             </div>
 
             <h2 class="modal-product-title">${prod.nombre}</h2>
-            <div class="modal-unit-price">Precio Unitario: S/ ${prod.precioMax.toFixed(2)}</div>
-            <div class="modal-main-price">${precioRango}</div>
+            <div class="modal-main-price">${precioTexto}</div>
 
-            ${prod.tallas.length > 0 ? `
-                <div class="modal-section-label">Tallas:</div>
+            <!-- 1. SECCIÓN DE TALLAS (UBICADA SOBRE LOS COLORES) -->
+            ${listaTallas.length > 0 ? `
+                <div class="modal-section-label">Talla:</div>
                 <div class="modal-size-grid">
-                    ${prod.tallas.map(t => `
+                    ${listaTallas.map(t => `
                         <button class="modal-size-box ${sel.talla === t ? 'active' : ''}" 
-                            onclick="seleccionarVariacionModal('${prod.id}', 'talla', '${t}', this)">${t}</button>
+                            onclick="seleccionarVariacionModal('${prod.id}', 'talla', '${t}', this)">
+                            ${t}
+                        </button>
                     `).join('')}
                 </div>
             ` : ''}
 
-            ${prod.medidas.length > 0 ? `
-                <div class="modal-section-label">${prod.categoria.includes('TAZA') ? 'Capacidad' : 'Medida'}:</div>
-                <div class="modal-size-grid">
-                    ${prod.medidas.map(m => `
-                        <button class="modal-size-box ${sel.medida === m ? 'active' : ''}" 
-                            onclick="seleccionarVariacionModal('${prod.id}', 'medida', '${m}', this)">${m}</button>
-                    `).join('')}
-                </div>
-            ` : ''}
-
+            <!-- 2. SECCIÓN DE COLORES -->
             ${prod.colores.length > 0 ? `
-                <div class="modal-section-label">Colores:</div>
+                <div class="modal-section-label">Color:</div>
                 <div class="modal-color-swatch-grid">
                     ${prod.colores.map(c => `
                         <div class="modal-color-square ${sel.color === c.nombre ? 'active' : ''}" 
                             style="background-color: ${c.hex};"
                             title="${c.nombre}"
-                            onclick="seleccionarVariacionModal('${prod.id}', 'color', '${c.nombre}', this)"></div>
+                            onclick="seleccionarVariacionModal('${prod.id}', 'color', '${c.nombre}', this)">
+                        </div>
                     `).join('')}
                 </div>
             ` : ''}
@@ -330,7 +355,7 @@ function seleccionarVariacionModal(idProducto, tipo, valor, el) {
 
     if (tipo === 'color') {
         const prod = listaProductosGlobal.find(p => String(p.id) === String(idProducto));
-        const colorObjeto = prod?.colores.find(c => c.nombre === valor);
+        const colorObjeto = prod?.colores.find(c => c.nombre.toLowerCase() === valor.toLowerCase());
         const modalImg = document.getElementById('modalImg');
         if (modalImg && colorObjeto) {
             modalImg.src = colorObjeto.imagen || prod.imagen;
@@ -352,7 +377,7 @@ function agregarAlCarrito(idProducto) {
     const medidaElegida = seleccion.medida || '';
     const colorElegido = seleccion.color || '';
 
-    const colorObjeto = producto.colores.find(c => c.nombre === colorElegido);
+    const colorObjeto = producto.colores.find(c => c.nombre.toLowerCase() === colorElegido.toLowerCase());
     const imagenItem = (colorObjeto && colorObjeto.imagen) ? colorObjeto.imagen : producto.imagen;
 
     const itemKey = `${idStr}_${tallaElegida}_${medidaElegida}_${colorElegido}`;
