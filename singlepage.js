@@ -107,7 +107,7 @@ async function obtenerProductos() {
                 if (indexA !== -1 && indexB !== -1) return indexA - indexB;
                 if (indexA !== -1) return -1;
                 if (indexB !== -1) return 1;
-                return a.nombre.localeCompare(b.nombre);
+                return a.nombre.localeCompare(b);
             });
 
             const medidas = [...new Set(variantes.map(v => v.medida || v.capacidad).filter(Boolean))];
@@ -263,11 +263,9 @@ function abrirModalProducto(idProducto) {
         document.body.appendChild(modalOverlay);
     }
 
-    // Si es un polo y no tiene tallas desde la BD, se asignan S, M, L, XL por defecto
     const esPolo = prod.categoria ? prod.categoria.includes('POLO') : true;
     const listaTallas = (prod.tallas && prod.tallas.length > 0) ? prod.tallas : (esPolo ? ['S', 'M', 'L', 'XL'] : []);
 
-    // Inicializar selección predeterminada
     if (!variacionesSeleccionadas[idStr]) {
         variacionesSeleccionadas[idStr] = {};
     }
@@ -297,7 +295,6 @@ function abrirModalProducto(idProducto) {
             <h2 class="modal-product-title">${prod.nombre}</h2>
             <div class="modal-main-price">${precioTexto}</div>
 
-            <!-- 1. SECCIÓN DE TALLAS (UBICADA SOBRE LOS COLORES) -->
             ${listaTallas.length > 0 ? `
                 <div class="modal-section-label">Talla:</div>
                 <div class="modal-size-grid">
@@ -310,7 +307,6 @@ function abrirModalProducto(idProducto) {
                 </div>
             ` : ''}
 
-            <!-- 2. SECCIÓN DE COLORES -->
             ${prod.colores.length > 0 ? `
                 <div class="modal-section-label">Color:</div>
                 <div class="modal-color-swatch-grid">

@@ -643,6 +643,37 @@ body {
     right: 0;
 }
 
+/* Botón flotante al lado izquierdo centrado verticalmente */
+.cart-quick-hide-btn {
+    position: absolute;
+    left: -22px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 48px;
+    background-color: var(--secondary);
+    color: var(--white);
+    border: none;
+    border-radius: 8px 0 0 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: -3px 0 8px rgba(0, 0, 0, 0.15);
+    transition: var(--transition);
+    z-index: 30;
+}
+
+.cart-quick-hide-btn:hover {
+    background-color: var(--primary);
+    left: -25px;
+    width: 25px;
+}
+
+.cart-quick-hide-btn i {
+    font-size: 1.1rem;
+}
+
 .cart-header {
     display: flex;
     justify-content: space-between;
