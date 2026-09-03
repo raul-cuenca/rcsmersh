@@ -7,9 +7,6 @@ let listaProductosGlobal = [];
 let categoriaFiltroActual = 'TODOS';
 let variacionesSeleccionadas = {};
 
-let coloresExpandidos = {}; 
-let observerTarjetas = null;
-
 // =========================================================================
 // 2. INICIALIZACIÓN
 // =========================================================================
@@ -19,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
     obtenerProductos();
 });
 
-// Obtención segura de la instancia de Supabase
 function getSupabaseClient() {
     if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient) {
         return window.supabaseClient;
@@ -31,7 +27,7 @@ function getSupabaseClient() {
 }
 
 // =========================================================================
-// 3. CONSULTA A SUPABASE Y PROCESAMIENTO CONSOLIDADO
+// 3. CONSULTA A SUPABASE Y PROCESAMIENTO
 // =========================================================================
 async function obtenerProductos() {
     const client = getSupabaseClient();
@@ -44,7 +40,6 @@ async function obtenerProductos() {
     }
 
     try {
-        // Sintaxis de relación estandard para Supabase v2
         const { data, error } = await client
             .from('productos')
             .select('*, producto_variantes(*)')
@@ -58,7 +53,6 @@ async function obtenerProductos() {
         }
 
         if (!data || data.length === 0) {
-            console.warn('La consulta tuvo éxito pero no devolvió registros.');
             if (grid) grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 2rem 0;">No hay productos disponibles por el momento.</p>';
             return;
         }
@@ -125,7 +119,7 @@ async function obtenerProductos() {
 }
 
 // =========================================================================
-// 4. RENDERIZADO Y FILTRADO DEL CATÁLOGO (UI/UX)
+// 4. RENDERIZADO Y FILTRADO DEL CATÁLOGO
 // =========================================================================
 function filtrarCategoria(categoria, btnElement) {
     categoriaFiltroActual = categoria.toUpperCase().trim();
@@ -155,7 +149,6 @@ function renderizarCatalogo() {
 
     const productosFiltrados = listaProductosGlobal.filter(p => {
         if (categoriaFiltroActual === 'TODOS') return true;
-        
         const catProd = p.categoria;
         const catFiltro = categoriaFiltroActual;
 
@@ -166,18 +159,20 @@ function renderizarCatalogo() {
     });
 
     if (productosFiltrados.length === 0) {
-        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 2rem 0;">No hay productos disponibles en esta categoría.</p>';
+        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 2rem 0;">No hay productos disponibles.</p>';
         return;
     }
 
     let htmlGrid = '';
 
     productosFiltrados.forEach(prod => {
+        const tieneVariantesColor = prod.colores && prod.colores.length > 1;
+
         if (!variacionesSeleccionadas[prod.id]) {
             variacionesSeleccionadas[prod.id] = {
-                talla: prod.tallas.length > 0 ? prod.tallas[0] : null,
-                medida: prod.medidas.length > 0 ? prod.medidas[0] : null,
-                color: prod.colores.length > 0 ? prod.colores[0].nombre : null
+                talla: prod.tallas[0] || null,
+                medida: prod.medidas[0] || null,
+                color: tieneVariantesColor ? (prod.colores[0]?.nombre || null) : null
             };
         }
 
@@ -187,110 +182,40 @@ function renderizarCatalogo() {
 
         const precioTexto = prod.precioMin === prod.precioMax 
             ? `S/ ${prod.precioMin.toFixed(2)}` 
-            : `S/ ${prod.precioMin.toFixed(2)} - S/ ${prod.precioMax.toFixed(2)}`;
+            : `S/ ${prod.precioMin.toFixed(2)}`;
 
-        let htmlTallas = '';
-        if (prod.tallas.length > 0) {
-            htmlTallas = `
-                <div class="variant-block">
-                    <div class="variant-label">Talla:</div>
-                    <div class="size-selector">
-                        ${prod.tallas.map(t => `
-                            <button class="size-pill ${sel.talla === t ? 'active' : ''}" 
-                                onclick="seleccionarVariacion('${prod.id}', 'talla', '${t}')">${t}</button>
-                        `).join('')}
-                    </div>
+        let html3Colores = '';
+        if (tieneVariantesColor) {
+            const primeros3Colores = prod.colores.slice(0, 3);
+            html3Colores = `
+                <div class="mini-color-container">
+                    ${primeros3Colores.map(c => `
+                        <span class="mini-color-swatch" 
+                            style="background-color: ${c.hex};" 
+                            title="${c.nombre}"></span>
+                    `).join('')}
+                    ${prod.colores.length > 3 ? `<span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">+${prod.colores.length - 3}</span>` : ''}
                 </div>
             `;
-        }
-
-        let htmlMedidas = '';
-        if (prod.medidas.length > 0) {
-            const etiquetaMedida = prod.categoria.includes('TAZA') ? 'Capacidad' : 'Medida';
-            htmlMedidas = `
-                <div class="variant-block">
-                    <div class="variant-label">${etiquetaMedida}:</div>
-                    <div class="size-selector">
-                        ${prod.medidas.map(m => `
-                            <button class="size-pill ${sel.medida === m ? 'active' : ''}" 
-                                style="padding: 0 0.5rem;"
-                                onclick="seleccionarVariacion('${prod.id}', 'medida', '${m}')">${m}</button>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        let htmlColores = '';
-        if (prod.colores.length > 0) {
-            htmlColores = generarHTMLColores(prod.id);
         }
 
         htmlGrid += `
-            <div class="product-card" data-id="${prod.id}">
-                ${prod.badge ? `<span class="product-badge">${prod.badge}</span>` : ''}
+            <div class="product-card" data-id="${prod.id}" onclick="abrirModalProducto('${prod.id}')">
                 <div class="product-img-wrapper">
                     <img src="${imagenAMostrar}" alt="${prod.nombre}" loading="lazy">
                 </div>
-                <div class="product-info">
+                <div class="product-info-compact">
                     <div>
                         <h3 class="product-title">${prod.nombre}</h3>
-                        <div class="product-unit-text">Precio unit: ${precioTexto}</div>
-                        <div class="product-price-range">${precioTexto}</div>
-                        ${htmlTallas}
-                        ${htmlMedidas}
-                        <div class="container-colores-${prod.id}">
-                            ${htmlColores}
-                        </div>
+                        <div class="product-price-bold">${precioTexto}</div>
                     </div>
-                    <button class="btn btn-primary btn-block add-to-cart-btn" onclick="agregarAlCarrito('${prod.id}')">
-                        Agregar al Carrito
-                    </button>
+                    ${html3Colores}
                 </div>
             </div>
         `;
     });
 
     grid.innerHTML = htmlGrid;
-    //inicializarObserverTarjetas();
-    inicializarEventosTarjetas();
-}
-
-function generarHTMLColores(idProducto) {
-    const prod = listaProductosGlobal.find(p => String(p.id) === String(idProducto));
-    if (!prod || !prod.colores.length) return '';
-
-    const sel = variacionesSeleccionadas[prod.id] || {};
-    const LIMITE = 5;
-    const estaExpandido = coloresExpandidos[prod.id] || false;
-    const tieneMasColores = prod.colores.length > LIMITE;
-
-    const coloresAMostrar = (tieneMasColores && !estaExpandido) 
-        ? prod.colores.slice(0, LIMITE) 
-        : prod.colores;
-
-    const botonToggle = tieneMasColores ? `
-        <button class="color-swatch-toggle" 
-            onclick="toggleMostrarColores('${prod.id}')" 
-            title="${estaExpandido ? 'Ocultar colores' : 'Ver todos los colores'}">
-            ${estaExpandido ? '<i class="ph ph-caret-left"></i>' : `+${prod.colores.length - LIMITE}`}
-        </button>
-    ` : '';
-
-    return `
-        <div class="variant-block">
-            <div class="variant-label">Color:</div>
-            <div class="color-selector">
-                ${coloresAMostrar.map(c => `
-                    <button class="color-swatch ${sel.color === c.nombre ? 'active' : ''}" 
-                        style="background-color: ${c.hex};" 
-                        title="${c.nombre}"
-                        onclick="seleccionarVariacion('${prod.id}', 'color', '${c.nombre}')"></button>
-                `).join('')}
-                ${botonToggle}
-            </div>
-        </div>
-    `;
 }
 
 function seleccionarVariacion(idProducto, tipo, valor) {
@@ -299,89 +224,122 @@ function seleccionarVariacion(idProducto, tipo, valor) {
         variacionesSeleccionadas[idStr] = {};
     }
     variacionesSeleccionadas[idStr][tipo] = valor;
+}
 
-    const card = document.querySelector(`.product-card[data-id="${idStr}"]`);
-    if (!card) return;
+// =========================================================================
+// 5. MODAL DE PRODUCTO (RESPONSIVE / MOBILE APP STYLE)
+// =========================================================================
+function abrirModalProducto(idProducto) {
+    const idStr = String(idProducto);
+    const prod = listaProductosGlobal.find(p => String(p.id) === idStr);
+    if (!prod) return;
 
-    if (tipo === 'color') {
-        const colorButtons = card.querySelectorAll('.color-swatch');
-        colorButtons.forEach(btn => {
-            if (btn.getAttribute('title') === valor) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
+    let modalOverlay = document.getElementById('productModalOverlay');
+    if (!modalOverlay) {
+        modalOverlay = document.createElement('div');
+        modalOverlay.id = 'productModalOverlay';
+        modalOverlay.className = 'product-modal-overlay';
+        document.body.appendChild(modalOverlay);
+    }
 
-        const imgEl = card.querySelector('.product-img-wrapper img');
-        const prod = listaProductosGlobal.find(p => String(p.id) === idStr);
+    const sel = variacionesSeleccionadas[idStr] || {
+        talla: prod.tallas[0] || null,
+        medida: prod.medidas[0] || null,
+        color: prod.colores[0]?.nombre || null
+    };
 
-        if (imgEl && prod) {
-            const colorObjeto = prod.colores.find(c => c.nombre === valor);
-            const nuevaImagen = (colorObjeto && colorObjeto.imagen) ? colorObjeto.imagen : prod.imagen;
+    const colorObjeto = prod.colores.find(c => c.nombre === sel.color);
+    const imagenAMostrar = (colorObjeto && colorObjeto.imagen) ? colorObjeto.imagen : prod.imagen;
+    
+    const precioRango = prod.precioMin === prod.precioMax 
+        ? `S/ ${prod.precioMin.toFixed(2)}` 
+        : `S/ ${prod.precioMin.toFixed(2)} - S/ ${prod.precioMax.toFixed(2)}`;
 
-            if (imgEl.src !== nuevaImagen) {
-                imgEl.classList.add('changing');
+    modalOverlay.innerHTML = `
+        <div class="product-modal-card">
+            <button class="modal-close-btn" onclick="cerrarModalProducto()">&times;</button>
+            
+            <div class="modal-img-container">
+                <img id="modalImg" src="${imagenAMostrar}" alt="${prod.nombre}">
+            </div>
 
-                const imgTemp = new Image();
-                imgTemp.src = nuevaImagen;
-                
-                const aplicarCambio = () => {
-                    imgEl.src = nuevaImagen;
-                    imgEl.classList.remove('changing');
-                };
+            <h2 class="modal-product-title">${prod.nombre}</h2>
+            <div class="modal-unit-price">Precio Unitario: S/ ${prod.precioMax.toFixed(2)}</div>
+            <div class="modal-main-price">${precioRango}</div>
 
-                imgTemp.onload = aplicarCambio;
-                imgTemp.onerror = aplicarCambio;
-            }
-        }
-    } else {
-        const selectorPills = card.querySelectorAll(`.size-pill`);
-        selectorPills.forEach(pill => {
-            if (pill.textContent.trim() === valor) {
-                pill.classList.add('active');
-            } else {
-                pill.classList.remove('active');
-            }
-        });
+            ${prod.tallas.length > 0 ? `
+                <div class="modal-section-label">Tallas:</div>
+                <div class="modal-size-grid">
+                    ${prod.tallas.map(t => `
+                        <button class="modal-size-box ${sel.talla === t ? 'active' : ''}" 
+                            onclick="seleccionarVariacionModal('${prod.id}', 'talla', '${t}', this)">${t}</button>
+                    `).join('')}
+                </div>
+            ` : ''}
+
+            ${prod.medidas.length > 0 ? `
+                <div class="modal-section-label">${prod.categoria.includes('TAZA') ? 'Capacidad' : 'Medida'}:</div>
+                <div class="modal-size-grid">
+                    ${prod.medidas.map(m => `
+                        <button class="modal-size-box ${sel.medida === m ? 'active' : ''}" 
+                            onclick="seleccionarVariacionModal('${prod.id}', 'medida', '${m}', this)">${m}</button>
+                    `).join('')}
+                </div>
+            ` : ''}
+
+            ${prod.colores.length > 0 ? `
+                <div class="modal-section-label">Colores:</div>
+                <div class="modal-color-swatch-grid">
+                    ${prod.colores.map(c => `
+                        <div class="modal-color-square ${sel.color === c.nombre ? 'active' : ''}" 
+                            style="background-color: ${c.hex};"
+                            title="${c.nombre}"
+                            onclick="seleccionarVariacionModal('${prod.id}', 'color', '${c.nombre}', this)"></div>
+                    `).join('')}
+                </div>
+            ` : ''}
+
+            <button class="modal-btn-add" onclick="agregarAlCarrito('${prod.id}'); cerrarModalProducto();">
+                Agregar al Carrito
+            </button>
+        </div>
+    `;
+
+    setTimeout(() => modalOverlay.classList.add('active'), 10);
+
+    modalOverlay.onclick = (e) => {
+        if (e.target === modalOverlay) cerrarModalProducto();
+    };
+}
+
+function cerrarModalProducto() {
+    const modalOverlay = document.getElementById('productModalOverlay');
+    if (modalOverlay) {
+        modalOverlay.classList.remove('active');
     }
 }
 
-function toggleMostrarColores(idProducto) {
-    const idStr = String(idProducto);
-    coloresExpandidos[idStr] = !coloresExpandidos[idStr];
-    actualizarUIColoresTarget(idStr);
-}
+function seleccionarVariacionModal(idProducto, tipo, valor, el) {
+    seleccionarVariacion(idProducto, tipo, valor);
 
-function inicializarObserverTarjetas() {
-    if (observerTarjetas) observerTarjetas.disconnect();
+    if (el) {
+        const parent = el.parentElement;
+        parent.querySelectorAll('.active').forEach(item => item.classList.remove('active'));
+        el.classList.add('active');
+    }
 
-    observerTarjetas = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (!entry.isIntersecting) {
-                const idProducto = entry.target.getAttribute('data-id');
-                if (idProducto && coloresExpandidos[idProducto]) {
-                    coloresExpandidos[idProducto] = false;
-                    actualizarUIColoresTarget(idProducto);
-                }
-            }
-        });
-    }, { threshold: 0.1 });
-
-    document.querySelectorAll('.product-card').forEach(card => {
-        observerTarjetas.observe(card);
-    });
-}
-
-function actualizarUIColoresTarget(idProducto) {
-    const contenedorColores = document.querySelector(`.container-colores-${idProducto}`);
-    if (contenedorColores) {
-        contenedorColores.innerHTML = generarHTMLColores(idProducto);
+    if (tipo === 'color') {
+        const prod = listaProductosGlobal.find(p => String(p.id) === String(idProducto));
+        const colorObjeto = prod?.colores.find(c => c.nombre === valor);
+        const modalImg = document.getElementById('modalImg');
+        if (modalImg && colorObjeto) {
+            modalImg.src = colorObjeto.imagen || prod.imagen;
+        }
     }
 }
 
 // =========================================================================
-// 5. LÓGICA DEL CARRITO DE COMPRAS (SLIDE-OVER)
+// 6. LÓGICA DEL CARRITO DE COMPRAS
 // =========================================================================
 function agregarAlCarrito(idProducto) {
     const idStr = String(idProducto);
@@ -501,9 +459,6 @@ function actualizarCarritoUI() {
     if (cartTotal) cartTotal.textContent = totalPrecio.toFixed(2);
 }
 
-// =========================================================================
-// 6. FLUJO Y PEDIDO POR WHATSAPP
-// =========================================================================
 function enviarPedidoWhatsApp() {
     if (carrito.length === 0) {
         alert('Tu carrito está vacío. Agrega productos antes de enviar el pedido.');
@@ -588,7 +543,7 @@ document.addEventListener('click', (event) => {
     if (cartDropdown.classList.contains('active')) {
         const esClicDentroDelCarrito = cartDropdown.contains(event.target);
         const esClicEnBotonHeader = cartBtn.contains(event.target);
-        const esClicEnBotonAccion = event.target.closest('.add-to-cart-btn, .cart-stepper, .btn, .cart-item-remove-subtle');
+        const esClicEnBotonAccion = event.target.closest('.modal-btn-add, .cart-stepper, .btn, .cart-item-remove-subtle');
 
         if (!esClicDentroDelCarrito && !esClicEnBotonHeader && !esClicEnBotonAccion) {
             cerrarCarrito();
@@ -643,23 +598,4 @@ function inicializarCarrusel() {
     if (prevBtn) prevBtn.addEventListener('click', () => showSlide(currentSlide - 1));
 
     setInterval(() => showSlide(currentSlide + 1), 5000);
-}
-
-// =========================================================================
-// GESTIÓN DE EVENTOS Y SALIDA DEL MOUSE DE LA TARJETA
-// =========================================================================
-function inicializarEventosTarjetas() {
-    // 1. Observer para cuando la tarjeta sale de la pantalla
-    inicializarObserverTarjetas();
-
-    // 2. Evento para cuando el mouse sale de la tarjeta
-    document.querySelectorAll('.product-card').forEach(card => {
-        card.addEventListener('mouseleave', () => {
-            const idProducto = card.getAttribute('data-id');
-            if (idProducto && coloresExpandidos[idProducto]) {
-                coloresExpandidos[idProducto] = false;
-                actualizarUIColoresTarget(idProducto);
-            }
-        });
-    });
 }
